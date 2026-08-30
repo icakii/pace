@@ -6,6 +6,8 @@ import {
   addDays, isSameMonth, isToday,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
+import { occursOnDate } from "@/lib/occurrences";
+import DayDetailSheet from "@/components/DayDetailSheet";
 
 const categoryDot = {
   work: "bg-accent",
@@ -18,6 +20,7 @@ export default function CalendarPage() {
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState(new Date());
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -25,8 +28,6 @@ export default function CalendarPage() {
       .from("tasks")
       .select("*")
       .eq("user_id", user.id)
-      .order("due_date", { ascending: false })
-      .limit(200)
       .then(({ data }) => setTasks(data || []))
       .finally(() => setLoading(false));
   }, [user]);
@@ -48,13 +49,16 @@ export default function CalendarPage() {
 
   const tasksByDay = useMemo(() => {
     const map = {};
-    tasks.forEach((t) => {
-      if (!t.due_date) return;
-      const key = t.due_date;
-      (map[key] = map[key] || []).push(t);
+    days.forEach((d) => {
+      const key = format(d, "yyyy-MM-dd");
+      map[key] = tasks.filter((t) => occursOnDate(t, d));
     });
     return map;
-  }, [tasks]);
+  }, [tasks, days]);
+
+  const handleTaskUpdated = (updated) => {
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+  };
 
   return (
     <div className="flex flex-col gap-6">
@@ -94,14 +98,15 @@ export default function CalendarPage() {
           const inMonth = isSameMonth(d, cursor);
           const today = isToday(d);
           return (
-            <div
+            <button
               key={d.toISOString()}
-              className={`flex min-h-[84px] flex-col rounded-2xl p-2.5 transition-all duration-200 ${
+              onClick={() => setSelectedDate(d)}
+              className={`flex min-h-[84px] flex-col items-start rounded-2xl p-2.5 text-left transition-all duration-200 ${
                 today
                   ? "bg-primary/15 ring-1 ring-primary/40"
                   : inMonth
                   ? "bg-card/60 hover:bg-card"
-                  : "bg-transparent text-muted-foreground/50"
+                  : "bg-transparent text-muted-foreground/50 hover:bg-card/30"
               }`}
             >
               <span className={`font-heading text-sm ${today ? "font-semibold text-primary" : ""}`}>
@@ -119,7 +124,7 @@ export default function CalendarPage() {
                   <span className="text-[10px] text-muted-foreground">+{dayTasks.length - 4}</span>
                 )}
               </div>
-            </div>
+            </button>
           );
         })}
       </div>
@@ -129,6 +134,13 @@ export default function CalendarPage() {
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-accent" /> Work</span>
         <span className="flex items-center gap-1.5"><span className="h-2 w-2 rounded-full bg-muted-foreground/50" /> Personal</span>
       </div>
+
+      <DayDetailSheet
+        date={selectedDate}
+        tasks={tasks}
+        onClose={() => setSelectedDate(null)}
+        onTaskUpdated={handleTaskUpdated}
+      />
     </div>
   );
 }

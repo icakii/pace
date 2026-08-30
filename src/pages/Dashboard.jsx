@@ -5,6 +5,8 @@ import { format, startOfWeek, addDays, isToday, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { TaskCheckbox } from "@/components/TaskCheckbox";
+import { occursOnDate } from "@/lib/occurrences";
+import DayDetailSheet from "@/components/DayDetailSheet";
 
 const QUOTE = {
   text: "Almost everything will work again if you unplug it for a few minutes — including you.",
@@ -21,6 +23,7 @@ export default function Dashboard() {
   const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [selectedDate, setSelectedDate] = useState(null);
 
   useEffect(() => {
     if (!user) return;
@@ -28,8 +31,6 @@ export default function Dashboard() {
       .from("tasks")
       .select("*")
       .eq("user_id", user.id)
-      .order("due_date", { ascending: false })
-      .limit(60)
       .then(({ data }) => setTasks(data || []))
       .finally(() => setLoading(false));
   }, [user]);
@@ -57,6 +58,10 @@ export default function Dashboard() {
     setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
   };
 
+  const handleTaskUpdated = (updated) => {
+    setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
+  };
+
   return (
     <div className="flex flex-col gap-8">
       <header>
@@ -72,9 +77,11 @@ export default function Dashboard() {
       <section className="grid grid-cols-7 gap-2">
         {weekDays.map((d) => {
           const active = isToday(d);
+          const dayTasks = tasks.filter((t) => occursOnDate(t, d));
           return (
-            <div
+            <button
               key={d.toISOString()}
+              onClick={() => setSelectedDate(d)}
               className={`flex flex-col items-center rounded-2xl py-3 transition-all duration-200 ${
                 active ? "bg-primary text-primary-foreground shadow-soft" : "bg-card/60 hover:bg-card"
               }`}
@@ -83,7 +90,22 @@ export default function Dashboard() {
                 {format(d, "EEE")}
               </span>
               <span className="mt-1 font-heading text-lg font-medium">{format(d, "d")}</span>
-            </div>
+              <div className="mt-1.5 flex gap-1">
+                {dayTasks.slice(0, 3).map((t) => (
+                  <span
+                    key={t.id}
+                    className={`h-1.5 w-1.5 rounded-full ${
+                      active ? "bg-primary-foreground/70" : categoryDot[t.category] || "bg-muted"
+                    }`}
+                  />
+                ))}
+                {dayTasks.length > 3 && (
+                  <span className={`text-[9px] ${active ? "text-primary-foreground/70" : "text-muted-foreground"}`}>
+                    +{dayTasks.length - 3}
+                  </span>
+                )}
+              </div>
+            </button>
           );
         })}
       </section>
@@ -134,6 +156,13 @@ export default function Dashboard() {
           <p className="text-sm text-muted-foreground">— {QUOTE.author}</p>
         </section>
       </div>
+
+      <DayDetailSheet
+        date={selectedDate}
+        tasks={tasks}
+        onClose={() => setSelectedDate(null)}
+        onTaskUpdated={handleTaskUpdated}
+      />
     </div>
   );
 }
