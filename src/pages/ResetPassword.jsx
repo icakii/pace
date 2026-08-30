@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link, useSearchParams } from "react-router-dom";
-import { base44 } from "@/api/base44Client";
+import { Link } from "react-router-dom";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/AuthContext";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
@@ -8,8 +9,7 @@ import { Lock, Loader2, AlertTriangle } from "lucide-react";
 import AuthLayout from "@/components/AuthLayout";
 
 export default function ResetPassword() {
-  const [searchParams] = useSearchParams();
-  const resetToken = searchParams.get("token");
+  const { isPasswordRecovery, authChecked } = useAuth();
 
   const [newPassword, setNewPassword] = useState("");
   const [confirmPassword, setConfirmPassword] = useState("");
@@ -24,22 +24,25 @@ export default function ResetPassword() {
       return;
     }
     setLoading(true);
-    try {
-      await base44.auth.resetPassword({ resetToken, newPassword });
-      window.location.href = "/login";
-    } catch (err) {
-      setError(err.message || "Failed to reset password");
-    } finally {
-      setLoading(false);
+    const { error: updateError } = await supabase.auth.updateUser({ password: newPassword });
+    setLoading(false);
+    if (updateError) {
+      setError(updateError.message || "Failed to reset password");
+      return;
     }
+    window.location.href = "/login";
   };
 
-  if (!resetToken) {
+  if (!authChecked) {
+    return null;
+  }
+
+  if (!isPasswordRecovery) {
     return (
       <AuthLayout
         icon={AlertTriangle}
         title="Invalid reset link"
-        subtitle="This password reset link is missing or invalid"
+        subtitle="This password reset link is missing or has expired"
         footer={
           <Link to="/forgot-password" className="text-primary font-medium hover:underline">
             Request a new link
@@ -47,7 +50,7 @@ export default function ResetPassword() {
         }
       >
         <p className="text-sm text-foreground text-center">
-          The link you used appears to be incomplete. Please request a new password reset email.
+          The link you used appears to be incomplete or expired. Please request a new password reset email.
         </p>
       </AuthLayout>
     );

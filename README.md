@@ -6,7 +6,7 @@ A quiet personal organizer — calendar, tasks, thoughts, and a daily quote.
 
 - React 18 + React Router
 - Tailwind CSS + shadcn/ui components
-- TanStack Query for data fetching
+- Supabase (Postgres + Auth) for data and authentication
 
 ## Getting started
 
@@ -39,4 +39,8 @@ npm run preview
 
 ## Environment variables
 
-See `.env.example` for the required variables (app ID and related backend configuration).
+See `.env.example` — you'll need your Supabase project's URL and anon public key (Project Settings → API in the Supabase dashboard).
+
+## Database schema
+
+Run `supabase/schema.sql` in the Supabase SQL Editor to create the `tasks` and `thoughts` tables with row-level security.

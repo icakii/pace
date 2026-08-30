@@ -1,8 +1,9 @@
 import React, { useState, useEffect, useMemo } from "react";
-import { base44 } from "@/api/base44Client";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/AuthContext";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
-  addDays, isSameMonth, isToday, parseISO,
+  addDays, isSameMonth, isToday,
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 
@@ -13,15 +14,22 @@ const categoryDot = {
 };
 
 export default function CalendarPage() {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState(new Date());
 
   useEffect(() => {
-    base44.entities.Task.list("-due_date", 200)
-      .then(setTasks)
+    if (!user) return;
+    supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("due_date", { ascending: false })
+      .limit(200)
+      .then(({ data }) => setTasks(data || []))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   const monthStart = startOfMonth(cursor);
   const monthEnd = endOfMonth(cursor);

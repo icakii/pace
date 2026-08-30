@@ -1,6 +1,7 @@
 import React, { useState, useEffect } from "react";
-import { base44 } from "@/api/base44Client";
-import { format, startOfWeek, addDays, isToday, parseISO, isAfter } from "date-fns";
+import { supabase } from "@/lib/supabaseClient";
+import { useAuth } from "@/lib/AuthContext";
+import { format, startOfWeek, addDays, isToday, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { TaskCheckbox } from "@/components/TaskCheckbox";
@@ -17,14 +18,21 @@ const categoryDot = {
 };
 
 export default function Dashboard() {
+  const { user } = useAuth();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    base44.entities.Task.list("-due_date", 60)
-      .then(setTasks)
+    if (!user) return;
+    supabase
+      .from("tasks")
+      .select("*")
+      .eq("user_id", user.id)
+      .order("due_date", { ascending: false })
+      .limit(60)
+      .then(({ data }) => setTasks(data || []))
       .finally(() => setLoading(false));
-  }, []);
+  }, [user]);
 
   const today = new Date();
   const weekStart = startOfWeek(today, { weekStartsOn: 1 });
@@ -40,7 +48,12 @@ export default function Dashboard() {
     .slice(0, 6);
 
   const toggle = async (task) => {
-    const updated = await base44.entities.Task.update(task.id, { completed: !task.completed });
+    const { data: updated } = await supabase
+      .from("tasks")
+      .update({ completed: !task.completed })
+      .eq("id", task.id)
+      .select()
+      .single();
     setTasks((prev) => prev.map((t) => (t.id === task.id ? updated : t)));
   };
 
