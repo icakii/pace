@@ -1,0 +1,55 @@
+import React from "react";
+import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
+import { QueryClientProvider } from "@tanstack/react-query";
+import { queryClientInstance } from "@/lib/query-client";
+import { AuthProvider } from "@/lib/AuthContext";
+import ProtectedRoute from "@/components/ProtectedRoute";
+import Layout from "@/components/Layout";
+import ScrollToTop from "@/components/ScrollToTop";
+import { Toaster } from "@/components/ui/toaster";
+
+import Dashboard from "@/pages/Dashboard";
+import CalendarPage from "@/pages/CalendarPage";
+import TasksPage from "@/pages/TasksPage";
+import ThoughtsPage from "@/pages/ThoughtsPage";
+import QuotePage from "@/pages/QuotePage";
+import Login from "@/pages/Login";
+import Register from "@/pages/Register";
+import ForgotPassword from "@/pages/ForgotPassword";
+import ResetPassword from "@/pages/ResetPassword";
+import PageNotFound from "@/lib/PageNotFound";
+
+export default function App() {
+  return (
+    <QueryClientProvider client={queryClientInstance}>
+      <AuthProvider>
+        <BrowserRouter>
+          <ScrollToTop />
+          <Routes>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/forgot-password" element={<ForgotPassword />} />
+            <Route path="/reset-password" element={<ResetPassword />} />
+
+            <Route
+              element={
+                <ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />
+              }
+            >
+              <Route element={<Layout />}>
+                <Route path="/" element={<Dashboard />} />
+                <Route path="/calendar" element={<CalendarPage />} />
+                <Route path="/tasks" element={<TasksPage />} />
+                <Route path="/thoughts" element={<ThoughtsPage />} />
+                <Route path="/quote" element={<QuotePage />} />
+              </Route>
+            </Route>
+
+            <Route path="*" element={<PageNotFound />} />
+          </Routes>
+          <Toaster />
+        </BrowserRouter>
+      </AuthProvider>
+    </QueryClientProvider>
+  );
+}

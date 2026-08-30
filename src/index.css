@@ -1,0 +1,66 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --font-heading: "Fraunces", serif;
+  --font-body: "Inter", sans-serif;
+  --radius: 1rem;
+
+  /* Warm cream base */
+  --background: 40 33% 96%;
+  --foreground: 30 15% 18%;
+
+  --card: 40 40% 98%;
+  --card-foreground: 30 15% 18%;
+
+  --popover: 40 40% 98%;
+  --popover-foreground: 30 15% 18%;
+
+  /* Sage green primary */
+  --primary: 120 12% 45%;
+  --primary-foreground: 40 40% 98%;
+
+  --secondary: 40 20% 90%;
+  --secondary-foreground: 30 15% 18%;
+
+  --muted: 40 20% 91%;
+  --muted-foreground: 30 8% 45%;
+
+  /* Terracotta accent */
+  --accent: 14 55% 55%;
+  --accent-foreground: 40 40% 98%;
+
+  --destructive: 0 60% 50%;
+  --destructive-foreground: 40 40% 98%;
+
+  --border: 35 20% 87%;
+  --input: 35 20% 85%;
+  --ring: 120 12% 45%;
+
+  --sidebar: 40 30% 94%;
+  --sidebar-foreground: 30 15% 18%;
+  --sidebar-accent: 120 20% 88%;
+  --sidebar-accent-foreground: 120 20% 22%;
+}
+
+* {
+  border-color: hsl(var(--border));
+}
+
+body {
+  margin: 0;
+  background-color: hsl(var(--background));
+  color: hsl(var(--foreground));
+  font-family: var(--font-body);
+  -webkit-font-smoothing: antialiased;
+}
+
+.font-heading {
+  font-family: var(--font-heading);
+}
+
+.paper-texture {
+  background-image: radial-gradient(hsl(var(--foreground) / 0.03) 1px, transparent 1px);
+  background-size: 18px 18px;
+}
