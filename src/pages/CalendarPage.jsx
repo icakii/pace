@@ -1,6 +1,8 @@
 import React, { useState, useEffect, useMemo } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import {
   format, startOfMonth, endOfMonth, startOfWeek, endOfWeek,
   addDays, isSameMonth, isToday,
@@ -12,6 +14,7 @@ import DayDetailSheet from "@/components/DayDetailSheet";
 
 export default function CalendarPage() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [cursor, setCursor] = useState(new Date());
@@ -87,10 +90,14 @@ export default function CalendarPage() {
           const inMonth = isSameMonth(d, cursor);
           const today = isToday(d);
           return (
-            <button
+            <motion.button
               key={d.toISOString()}
               onClick={() => setSelectedDate(d)}
-              className={`flex min-h-[84px] flex-col items-start rounded-2xl p-2.5 text-left transition-all duration-200 ${
+              style={!isMobile ? { transformPerspective: 700 } : undefined}
+              whileHover={!isMobile ? { scale: 1.1, y: -5, rotateX: -10, boxShadow: "0 12px 24px -8px hsl(var(--foreground) / 0.18)" } : undefined}
+              whileTap={!isMobile ? { scale: 0.97, rotateX: -4 } : undefined}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              className={`relative z-0 flex min-h-[84px] flex-col items-start rounded-2xl p-2.5 text-left transition-colors duration-200 hover:z-10 ${
                 today
                   ? "bg-primary/15 ring-1 ring-primary/40"
                   : inMonth
@@ -113,7 +120,7 @@ export default function CalendarPage() {
                   <span className="text-[10px] text-muted-foreground">+{dayTasks.length - 4}</span>
                 )}
               </div>
-            </button>
+            </motion.button>
           );
         })}
       </div>

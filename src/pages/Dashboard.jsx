@@ -1,6 +1,8 @@
 import React, { useState, useEffect } from "react";
+import { motion } from "framer-motion";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
+import { useIsMobile } from "@/hooks/use-mobile";
 import { format, startOfWeek, addDays, isToday, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
@@ -16,6 +18,7 @@ const QUOTE = {
 
 export default function Dashboard() {
   const { user } = useAuth();
+  const isMobile = useIsMobile();
   const [tasks, setTasks] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedDate, setSelectedDate] = useState(null);
@@ -74,10 +77,14 @@ export default function Dashboard() {
           const active = isToday(d);
           const dayTasks = tasks.filter((t) => occursOnDate(t, d));
           return (
-            <button
+            <motion.button
               key={d.toISOString()}
               onClick={() => setSelectedDate(d)}
-              className={`flex flex-col items-center rounded-2xl py-3 transition-all duration-200 ${
+              style={!isMobile ? { transformPerspective: 700 } : undefined}
+              whileHover={!isMobile ? { scale: 1.1, y: -5, rotateX: -10, boxShadow: "0 12px 24px -8px hsl(var(--foreground) / 0.18)" } : undefined}
+              whileTap={!isMobile ? { scale: 0.97, rotateX: -4 } : undefined}
+              transition={{ type: "spring", stiffness: 400, damping: 20 }}
+              className={`relative z-0 flex flex-col items-center rounded-2xl py-3 transition-colors duration-200 hover:z-10 ${
                 active ? "bg-primary text-primary-foreground shadow-soft" : "bg-card/60 hover:bg-card"
               }`}
             >
@@ -100,7 +107,7 @@ export default function Dashboard() {
                   </span>
                 )}
               </div>
-            </button>
+            </motion.button>
           );
         })}
       </section>
