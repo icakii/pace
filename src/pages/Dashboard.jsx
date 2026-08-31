@@ -5,10 +5,11 @@ import { useAuth } from "@/lib/AuthContext";
 import { useIsMobile } from "@/hooks/use-mobile";
 import { format, startOfWeek, addDays, isToday, parseISO } from "date-fns";
 import { Link } from "react-router-dom";
-import { ArrowRight } from "lucide-react";
+import { ArrowRight, Flame } from "lucide-react";
 import { TaskCheckbox } from "@/components/TaskCheckbox";
 import { occursOnDate } from "@/lib/occurrences";
 import { categoryDot } from "@/lib/categories";
+import { computeStreak, STREAK_MIN } from "@/lib/stats";
 import DayDetailSheet from "@/components/DayDetailSheet";
 
 const QUOTE = {
@@ -47,9 +48,10 @@ export default function Dashboard() {
     .slice(0, 6);
 
   const toggle = async (task) => {
+    const nowCompleted = !task.completed;
     const { data: updated } = await supabase
       .from("tasks")
-      .update({ completed: !task.completed })
+      .update({ completed: nowCompleted, completed_at: nowCompleted ? new Date().toISOString() : null })
       .eq("id", task.id)
       .select()
       .single();
@@ -60,16 +62,32 @@ export default function Dashboard() {
     setTasks((prev) => prev.map((t) => (t.id === updated.id ? updated : t)));
   };
 
+  const streak = computeStreak(tasks);
+  const streakActive = streak >= STREAK_MIN;
+
   return (
     <div className="flex flex-col gap-8">
-      <header>
-        <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
-          {format(today, "EEEE")}
-        </p>
-        <h1 className="mt-1 font-heading text-5xl md:text-6xl font-medium leading-tight text-foreground">
-          {format(today, "MMMM d")}
-        </h1>
-        <p className="mt-2 text-muted-foreground">{format(today, "yyyy")}</p>
+      <header className="flex items-start justify-between gap-4">
+        <div>
+          <p className="text-sm uppercase tracking-[0.2em] text-muted-foreground">
+            {format(today, "EEEE")}
+          </p>
+          <h1 className="mt-1 font-heading text-5xl md:text-6xl font-medium leading-tight text-foreground">
+            {format(today, "MMMM d")}
+          </h1>
+          <p className="mt-2 text-muted-foreground">{format(today, "yyyy")}</p>
+        </div>
+        {!loading && (
+          <Link
+            to="/profile"
+            className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium shadow-soft transition-transform hover:scale-105 ${
+              streakActive ? "bg-accent/15 text-accent" : "bg-card text-muted-foreground"
+            }`}
+          >
+            <Flame className="h-4 w-4" strokeWidth={1.8} fill={streakActive ? "currentColor" : "none"} />
+            {streak}
+          </Link>
+        )}
       </header>
 
       <section className="grid grid-cols-7 gap-2">

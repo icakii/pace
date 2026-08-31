@@ -1,6 +1,6 @@
 import React, { useState } from "react";
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Calendar, ListTodo, BookOpen, Quote, Menu, X } from "lucide-react";
+import { NavLink, Link } from "react-router-dom";
+import { LayoutDashboard, Calendar, ListTodo, BookOpen, Quote, UserCircle, Menu, X } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -8,13 +8,14 @@ const nav = [
   { to: "/tasks", label: "Tasks", icon: ListTodo },
   { to: "/thoughts", label: "Thoughts", icon: BookOpen },
   { to: "/quote", label: "Quote", icon: Quote },
+  { to: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 export function MobileNav() {
   const [open, setOpen] = useState(false);
   return (
     <div className="md:hidden sticky top-0 z-30 flex items-center justify-between border-b border-border bg-background/90 backdrop-blur px-5 py-3">
-      <span className="font-heading text-2xl font-semibold">Pace</span>
+      <Link to="/" className="font-heading text-2xl font-semibold">Pace</Link>
       <button onClick={() => setOpen(v => !v)} className="rounded-lg p-2 text-muted-foreground hover:bg-sidebar-accent/50">
         {open ? <X className="h-5 w-5" /> : <Menu className="h-5 w-5" />}
       </button>

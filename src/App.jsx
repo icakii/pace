@@ -13,6 +13,7 @@ import CalendarPage from "@/pages/CalendarPage";
 import TasksPage from "@/pages/TasksPage";
 import ThoughtsPage from "@/pages/ThoughtsPage";
 import QuotePage from "@/pages/QuotePage";
+import ProfilePage from "@/pages/ProfilePage";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -42,6 +43,7 @@ export default function App() {
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/thoughts" element={<ThoughtsPage />} />
                 <Route path="/quote" element={<QuotePage />} />
+                <Route path="/profile" element={<ProfilePage />} />
               </Route>
             </Route>
 

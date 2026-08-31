@@ -1,6 +1,6 @@
 import React from "react";
-import { NavLink } from "react-router-dom";
-import { LayoutDashboard, Calendar, ListTodo, BookOpen, Quote } from "lucide-react";
+import { NavLink, Link } from "react-router-dom";
+import { LayoutDashboard, Calendar, ListTodo, BookOpen, Quote, UserCircle } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -8,19 +8,20 @@ const nav = [
   { to: "/tasks", label: "Tasks", icon: ListTodo },
   { to: "/thoughts", label: "Thoughts", icon: BookOpen },
   { to: "/quote", label: "Daily Quote", icon: Quote },
+  { to: "/profile", label: "Profile", icon: UserCircle },
 ];
 
 export default function Sidebar() {
   return (
     <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border bg-sidebar/60 backdrop-blur-sm px-5 py-8">
-      <div className="mb-10 px-2">
+      <Link to="/" className="mb-10 px-2">
         <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground">
           Pace
         </h1>
         <p className="mt-1 text-xs font-body text-muted-foreground tracking-wide">
           a quiet place for your day
         </p>
-      </div>
+      </Link>
 
       <nav className="flex flex-col gap-1">
         {nav.map(({ to, label, icon: Icon, end }) => (

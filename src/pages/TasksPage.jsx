@@ -113,7 +113,13 @@ export default function TasksPage() {
       const { data } = await supabase.from("tasks").update({ completed_dates: newDates }).eq("id", task.id).select().single();
       if (data) setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)));
     } else {
-      const { data } = await supabase.from("tasks").update({ completed: !task.completed }).eq("id", task.id).select().single();
+      const nowCompleted = !task.completed;
+      const { data } = await supabase
+        .from("tasks")
+        .update({ completed: nowCompleted, completed_at: nowCompleted ? new Date().toISOString() : null })
+        .eq("id", task.id)
+        .select()
+        .single();
       if (data) setTasks((prev) => prev.map((t) => (t.id === task.id ? data : t)));
     }
   };

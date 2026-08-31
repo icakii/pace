@@ -30,9 +30,10 @@ export default function DayDetailSheet({ date, tasks, onClose, onTaskUpdated }) 
         .single();
       if (data) onTaskUpdated(data);
     } else {
+      const nowCompleted = !task.completed;
       const { data } = await supabase
         .from("tasks")
-        .update({ completed: !task.completed })
+        .update({ completed: nowCompleted, completed_at: nowCompleted ? new Date().toISOString() : null })
         .eq("id", task.id)
         .select()
         .single();

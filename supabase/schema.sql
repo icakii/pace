@@ -7,6 +7,7 @@ create table if not exists tasks (
   due_date date,
   category text,
   completed boolean not null default false,
+  completed_at timestamptz,
   start_time time,
   end_time time,
   recurrence_days smallint[],
