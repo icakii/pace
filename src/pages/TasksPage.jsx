@@ -10,12 +10,7 @@ import { Switch } from "@/components/ui/switch";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 import { Select, SelectTrigger, SelectValue, SelectContent, SelectItem } from "@/components/ui/select";
 import { isRecurring, isOccurrenceCompleted, describeRecurrence } from "@/lib/occurrences";
-
-const CATEGORIES = [
-  { value: "personal", label: "Personal" },
-  { value: "work", label: "Work" },
-  { value: "uni", label: "Uni" },
-];
+import { CATEGORIES, categoryDot } from "@/lib/categories";
 
 const WEEKDAYS = [
   { value: "1", label: "Mon" },
@@ -33,12 +28,6 @@ const INTERVALS = [
   { value: "3", label: "Every 3 weeks" },
   { value: "4", label: "Every 4 weeks" },
 ];
-
-const categoryDot = {
-  work: "bg-accent",
-  uni: "bg-primary",
-  personal: "bg-muted-foreground/50",
-};
 
 export default function TasksPage() {
   const { user } = useAuth();
@@ -87,7 +76,9 @@ export default function TasksPage() {
   const handleAdd = async (e) => {
     e.preventDefault();
     if (!title.trim()) return;
-    if (repeatOn && (!dueDate || repeatDays.length === 0)) return;
+    if (repeatOn && repeatDays.length === 0) return;
+
+    const anchorDate = dueDate || (repeatOn ? format(new Date(), "yyyy-MM-dd") : null);
 
     setSaving(true);
     const { data, error } = await supabase
@@ -95,7 +86,7 @@ export default function TasksPage() {
       .insert({
         user_id: user.id,
         title: title.trim(),
-        due_date: dueDate || null,
+        due_date: anchorDate,
         category,
         completed: false,
         start_time: startTime || null,
@@ -177,9 +168,9 @@ export default function TasksPage() {
           </div>
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-wider text-muted-foreground">
-              {repeatOn ? "Starts on" : "Due date"}
+              {repeatOn ? "Starts on (optional, defaults to today)" : "Due date"}
             </label>
-            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} required={repeatOn} />
+            <Input type="date" value={dueDate} onChange={(e) => setDueDate(e.target.value)} />
           </div>
           <div className="space-y-1.5">
             <label className="text-xs uppercase tracking-wider text-muted-foreground">Category</label>

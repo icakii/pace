@@ -6,17 +6,12 @@ import { Link } from "react-router-dom";
 import { ArrowRight } from "lucide-react";
 import { TaskCheckbox } from "@/components/TaskCheckbox";
 import { occursOnDate } from "@/lib/occurrences";
+import { categoryDot } from "@/lib/categories";
 import DayDetailSheet from "@/components/DayDetailSheet";
 
 const QUOTE = {
   text: "Almost everything will work again if you unplug it for a few minutes — including you.",
   author: "Anne Lamott",
-};
-
-const categoryDot = {
-  work: "bg-accent",
-  uni: "bg-primary",
-  personal: "bg-muted-foreground/50",
 };
 
 export default function Dashboard() {

@@ -7,13 +7,8 @@ import {
 } from "date-fns";
 import { ChevronLeft, ChevronRight } from "lucide-react";
 import { occursOnDate } from "@/lib/occurrences";
+import { categoryDot } from "@/lib/categories";
 import DayDetailSheet from "@/components/DayDetailSheet";
-
-const categoryDot = {
-  work: "bg-accent",
-  uni: "bg-primary",
-  personal: "bg-muted-foreground/50",
-};
 
 export default function CalendarPage() {
   const { user } = useAuth();
@@ -70,12 +65,6 @@ export default function CalendarPage() {
             className="rounded-lg p-2 text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
           >
             <ChevronLeft className="h-5 w-5" />
-          </button>
-          <button
-            onClick={() => setCursor(new Date())}
-            className="rounded-lg px-3 py-1.5 text-sm text-muted-foreground hover:bg-card hover:text-foreground transition-colors"
-          >
-            Today
           </button>
           <button
             onClick={() => setCursor(addDays(monthEnd, 1))}

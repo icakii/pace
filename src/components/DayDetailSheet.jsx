@@ -5,12 +5,7 @@ import { X } from "lucide-react";
 import { supabase } from "@/lib/supabaseClient";
 import { TaskCheckbox } from "@/components/TaskCheckbox";
 import { getTasksForDate, isOccurrenceCompleted, isRecurring, describeRecurrence } from "@/lib/occurrences";
-
-const categoryDot = {
-  work: "bg-accent",
-  uni: "bg-primary",
-  personal: "bg-muted-foreground/50",
-};
+import { categoryDot } from "@/lib/categories";
 
 function formatTime(t) {
   const [h, m] = t.split(":");
@@ -63,7 +58,7 @@ export default function DayDetailSheet({ date, tasks, onClose, onTaskUpdated }) 
             animate={{ y: 0 }}
             exit={{ y: "100%" }}
             transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed bottom-0 left-0 right-0 z-50 max-h-[80vh] overflow-y-auto rounded-t-3xl bg-card p-6 shadow-soft-lg md:left-1/2 md:right-auto md:w-full md:max-w-lg md:-translate-x-1/2"
+            className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-card p-6 shadow-soft-lg"
           >
             <div className="mb-4 flex items-center justify-between">
               <h2 className="font-heading text-2xl font-medium">{format(date, "EEEE, MMMM d")}</h2>
