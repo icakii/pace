@@ -53,19 +53,20 @@ export default function DayDetailSheet({ date, tasks, onClose, onTaskUpdated }) 
             onClick={onClose}
             className="fixed inset-0 z-40 bg-foreground/20 backdrop-blur-[2px]"
           />
-          <motion.div
-            initial={{ y: "100%" }}
-            animate={{ y: 0 }}
-            exit={{ y: "100%" }}
-            transition={{ type: "spring", damping: 28, stiffness: 300 }}
-            className="fixed inset-x-0 bottom-0 z-50 mx-auto max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-card p-6 shadow-soft-lg"
-          >
-            <div className="mb-4 flex items-center justify-between">
-              <h2 className="font-heading text-2xl font-medium">{format(date, "EEEE, MMMM d")}</h2>
-              <button onClick={onClose} className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label="Close">
-                <X className="h-5 w-5" />
-              </button>
-            </div>
+          <div className="pointer-events-none fixed inset-0 z-50 flex items-end justify-center">
+            <motion.div
+              initial={{ y: "100%" }}
+              animate={{ y: 0 }}
+              exit={{ y: "100%" }}
+              transition={{ type: "spring", damping: 28, stiffness: 300 }}
+              className="pointer-events-auto max-h-[80vh] w-full max-w-lg overflow-y-auto rounded-t-3xl bg-card p-6 shadow-soft-lg"
+            >
+              <div className="mb-4 flex items-center justify-between">
+                <h2 className="font-heading text-2xl font-medium">{format(date, "EEEE, MMMM d")}</h2>
+                <button onClick={onClose} className="rounded-lg p-2 text-muted-foreground hover:bg-muted" aria-label="Close">
+                  <X className="h-5 w-5" />
+                </button>
+              </div>
 
             {dayTasks.length === 0 ? (
               <p className="py-10 text-center text-sm italic text-muted-foreground">
@@ -97,7 +98,8 @@ export default function DayDetailSheet({ date, tasks, onClose, onTaskUpdated }) 
                 ))}
               </ul>
             )}
-          </motion.div>
+            </motion.div>
+          </div>
         </>
       )}
     </AnimatePresence>
