@@ -10,7 +10,7 @@ export default function ReaderPage() {
   const navigate = useNavigate();
   const { user } = useAuth();
 
-  const [signedUrl, setSignedUrl] = useState(null);
+  const [bookData, setBookData] = useState(null);
   const [location, setLocation] = useState(null);
   const [fontSize, setFontSize] = useState(100);
   const [loading, setLoading] = useState(true);
@@ -23,7 +23,11 @@ export default function ReaderPage() {
       const { data: book } = await supabase.from("books").select("*").eq("id", bookId).single();
       if (!book) return;
 
-      const { data: signed } = await supabase.storage.from("books").createSignedUrl(book.storage_path, 3600);
+      // Download raw bytes rather than a signed URL: epub.js detects a real
+      // .epub file by checking the URL string literally ends in ".epub",
+      // which a signed URL's "?token=..." suffix breaks, making it wrongly
+      // assume the URL is an already-unzipped folder.
+      const { data: fileBlob } = await supabase.storage.from("books").download(book.storage_path);
 
       const { data: progress } = await supabase
         .from("reading_progress")
@@ -33,7 +37,7 @@ export default function ReaderPage() {
         .maybeSingle();
 
       if (!cancelled) {
-        setSignedUrl(signed?.signedUrl || null);
+        setBookData(fileBlob ? await fileBlob.arrayBuffer() : null);
         setLocation(progress?.location || null);
         setLoading(false);
       }
@@ -68,7 +72,7 @@ export default function ReaderPage() {
     );
   }
 
-  if (!signedUrl) {
+  if (!bookData) {
     return (
       <div className="fixed inset-0 z-50 flex flex-col items-center justify-center gap-4 bg-background">
         <p className="text-muted-foreground">Couldn't load this book.</p>
@@ -110,7 +114,7 @@ export default function ReaderPage() {
 
       <div className="relative flex-1">
         <ReactReader
-          url={signedUrl}
+          url={bookData}
           location={location}
           locationChanged={handleLocationChanged}
           getRendition={(rendition) => {
