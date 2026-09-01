@@ -85,6 +85,7 @@ export default function ProfilePage() {
             {loading ? "—" : streak}
           </p>
           <p className="mt-1 text-sm text-muted-foreground">Day streak</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">Complete 3+ tasks in a day to count</p>
         </div>
       </div>
 
