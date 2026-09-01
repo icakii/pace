@@ -1,6 +1,6 @@
 import React from "react";
 import { NavLink, Link } from "react-router-dom";
-import { LayoutDashboard, Calendar, ListTodo, BookOpen, Quote, UserCircle } from "lucide-react";
+import { LayoutDashboard, Calendar, ListTodo, BookOpen, Quote, UserCircle, Library } from "lucide-react";
 
 const nav = [
   { to: "/", label: "Dashboard", icon: LayoutDashboard, end: true },
@@ -8,6 +8,7 @@ const nav = [
   { to: "/tasks", label: "Tasks", icon: ListTodo },
   { to: "/thoughts", label: "Thoughts", icon: BookOpen },
   { to: "/quote", label: "Daily Quote", icon: Quote },
+  { to: "/library", label: "Library", icon: Library },
   { to: "/profile", label: "Profile", icon: UserCircle },
 ];
 

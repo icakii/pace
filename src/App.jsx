@@ -1,4 +1,4 @@
-import React from "react";
+import React, { Suspense, lazy } from "react";
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { QueryClientProvider } from "@tanstack/react-query";
 import { queryClientInstance } from "@/lib/query-client";
@@ -7,6 +7,7 @@ import ProtectedRoute from "@/components/ProtectedRoute";
 import Layout from "@/components/Layout";
 import ScrollToTop from "@/components/ScrollToTop";
 import { Toaster } from "@/components/ui/toaster";
+import { Loader2 } from "lucide-react";
 
 import Dashboard from "@/pages/Dashboard";
 import CalendarPage from "@/pages/CalendarPage";
@@ -14,11 +15,20 @@ import TasksPage from "@/pages/TasksPage";
 import ThoughtsPage from "@/pages/ThoughtsPage";
 import QuotePage from "@/pages/QuotePage";
 import ProfilePage from "@/pages/ProfilePage";
+import LibraryPage from "@/pages/LibraryPage";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
 import ResetPassword from "@/pages/ResetPassword";
 import PageNotFound from "@/lib/PageNotFound";
+
+const ReaderPage = lazy(() => import("@/pages/ReaderPage"));
+
+const ReaderFallback = () => (
+  <div className="fixed inset-0 z-50 flex items-center justify-center bg-background">
+    <Loader2 className="h-6 w-6 animate-spin text-muted-foreground" />
+  </div>
+);
 
 export default function App() {
   return (
@@ -37,12 +47,22 @@ export default function App() {
                 <ProtectedRoute unauthenticatedElement={<Navigate to="/login" replace />} />
               }
             >
+              <Route
+                path="/reader/:bookId"
+                element={
+                  <Suspense fallback={<ReaderFallback />}>
+                    <ReaderPage />
+                  </Suspense>
+                }
+              />
+
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/thoughts" element={<ThoughtsPage />} />
                 <Route path="/quote" element={<QuotePage />} />
+                <Route path="/library" element={<LibraryPage />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
             </Route>
