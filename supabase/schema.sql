@@ -28,6 +28,7 @@ create table if not exists thoughts (
   id uuid primary key default gen_random_uuid(),
   user_id uuid references auth.users not null,
   content text not null,
+  mood text,
   created_at timestamptz not null default now()
 );
 
