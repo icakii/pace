@@ -85,7 +85,7 @@ export default function ReaderPage() {
 
   return (
     <div className="fixed inset-0 z-50 flex flex-col bg-background">
-      <div className="flex items-center justify-between border-b border-border bg-card px-4 py-2.5">
+      <div className="flex h-14 shrink-0 items-center justify-between border-b border-border bg-card px-4">
         <button
           onClick={() => navigate("/library")}
           className="rounded-lg p-2 text-muted-foreground hover:bg-muted"
@@ -112,7 +112,7 @@ export default function ReaderPage() {
         </div>
       </div>
 
-      <div className="relative flex-1">
+      <div className="relative" style={{ height: "calc(100vh - 3.5rem)" }}>
         <ReactReader
           url={bookData}
           location={location}
