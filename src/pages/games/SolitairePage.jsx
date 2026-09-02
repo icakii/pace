@@ -42,23 +42,20 @@ function deal() {
   return { tableau, stock, waste: [], foundations: { S: [], H: [], D: [], C: [] } };
 }
 
-function Card({ card, onClick, selected }) {
+function Card({ card, onClick, onDoubleClick, onPointerDown, selected, dragging }) {
   if (!card) return null;
   if (!card.faceUp) {
-    return (
-      <div
-        onClick={onClick}
-        className="flex h-16 w-12 items-center justify-center rounded-md border border-border bg-primary/30 sm:h-20 sm:w-14"
-      />
-    );
+    return <div className="flex h-16 w-12 items-center justify-center rounded-md border border-border bg-primary/30 sm:h-20 sm:w-14" />;
   }
   const isRed = RED.has(card.suit);
   return (
     <div
       onClick={onClick}
-      className={`flex h-16 w-12 cursor-pointer flex-col items-center justify-center rounded-md border-2 bg-card font-heading text-sm font-semibold shadow-soft transition-transform sm:h-20 sm:w-14 sm:text-base ${
+      onDoubleClick={onDoubleClick}
+      onPointerDown={onPointerDown}
+      className={`flex h-16 w-12 cursor-pointer touch-none select-none flex-col items-center justify-center rounded-md border-2 bg-card font-heading text-sm font-semibold shadow-soft transition-transform duration-150 sm:h-20 sm:w-14 sm:text-base ${
         isRed ? "text-destructive" : "text-foreground"
-      } ${selected ? "-translate-y-2 border-primary" : "border-border"}`}
+      } ${selected ? "-translate-y-2 border-primary" : "border-border"} ${dragging ? "opacity-30" : ""}`}
     >
       <span>{rankLabel(card.rank)}</span>
       <span>{SUIT_SYMBOL[card.suit]}</span>
@@ -72,6 +69,7 @@ export default function SolitairePage() {
   const [state, setState] = useState(deal);
   const [selection, setSelection] = useState(null); // { source: 'tableau'|'waste', col }
   const [ended, setEnded] = useState(false);
+  const [drag, setDrag] = useState(null); // { source, col, card, x, y }
 
   useEffect(() => {
     if (!user) return;
@@ -118,23 +116,58 @@ export default function SolitairePage() {
     });
   };
 
-  const selectedCard = () => {
-    if (!selection) return null;
-    if (selection.source === "waste") return state.waste[state.waste.length - 1];
-    return state.tableau[selection.col][state.tableau[selection.col].length - 1];
+  const cardAt = (source, col) => {
+    if (source === "waste") return state.waste[state.waste.length - 1];
+    return state.tableau[col][state.tableau[col].length - 1];
   };
 
-  const clearSelectionFrom = (nextState) => {
-    if (!selection) return nextState;
-    if (selection.source === "waste") {
+  const removeFrom = (source, col, nextState) => {
+    if (source === "waste") {
       return { ...nextState, waste: nextState.waste.slice(0, -1) };
     }
-    const col = [...nextState.tableau[selection.col]];
-    col.pop();
-    if (col.length > 0) col[col.length - 1] = { ...col[col.length - 1], faceUp: true };
+    const pile = [...nextState.tableau[col]];
+    pile.pop();
+    if (pile.length > 0) pile[pile.length - 1] = { ...pile[pile.length - 1], faceUp: true };
     const tableau = [...nextState.tableau];
-    tableau[selection.col] = col;
+    tableau[col] = pile;
     return { ...nextState, tableau };
+  };
+
+  const moveToTableau = (source, sourceCol, destCol) => {
+    const card = cardAt(source, sourceCol);
+    if (!card || !canPlaceOnTableau(card, destCol)) return false;
+    setState((s) => {
+      const cleared = removeFrom(source, sourceCol, s);
+      const tableau = [...cleared.tableau];
+      tableau[destCol] = [...tableau[destCol], { ...card, faceUp: true }];
+      return { ...cleared, tableau };
+    });
+    return true;
+  };
+
+  const moveToFoundation = (source, sourceCol) => {
+    const card = cardAt(source, sourceCol);
+    if (!card || !canPlaceOnFoundation(card)) return false;
+    setState((s) => {
+      const cleared = removeFrom(source, sourceCol, s);
+      const foundations = { ...cleared.foundations, [card.suit]: [...cleared.foundations[card.suit], card] };
+      return { ...cleared, foundations };
+    });
+    return true;
+  };
+
+  // Double-click: try foundation first, else a random valid tableau column.
+  const autoMove = (source, col) => {
+    const card = cardAt(source, col);
+    if (!card) return;
+    if (moveToFoundation(source, col)) return;
+    const options = state.tableau
+      .map((_, i) => i)
+      .filter((i) => !(source === "tableau" && i === col) && canPlaceOnTableau(card, i));
+    if (options.length > 0) {
+      const choice = options[Math.floor(Math.random() * options.length)];
+      moveToTableau(source, col, choice);
+    }
   };
 
   const handleWasteClick = () => {
@@ -146,43 +179,55 @@ export default function SolitairePage() {
   const handleTableauTopClick = (col) => {
     const pile = state.tableau[col];
     if (pile.length === 0) {
-      handleTableauDrop(col);
+      if (selection) {
+        if (moveToTableau(selection.source, selection.col, col)) setSelection(null);
+      }
       return;
     }
     const top = pile[pile.length - 1];
     if (!top.faceUp) return;
     if (selection?.source === "tableau" && selection.col === col) { setSelection(null); return; }
     if (selection) {
-      handleTableauDrop(col);
+      if (moveToTableau(selection.source, selection.col, col)) setSelection(null);
     } else {
       setSelection({ source: "tableau", col });
     }
   };
 
-  const handleTableauDrop = (col) => {
-    const card = selectedCard();
-    if (!card) return;
-    if (!canPlaceOnTableau(card, col)) return;
-    setState((s) => {
-      const cleared = clearSelectionFrom(s);
-      const tableau = [...cleared.tableau];
-      tableau[col] = [...tableau[col], { ...card, faceUp: true }];
-      return { ...cleared, tableau };
-    });
-    setSelection(null);
+  const handleFoundationClick = (suit) => {
+    if (!selection) return;
+    const card = cardAt(selection.source, selection.col);
+    if (card?.suit === suit && moveToFoundation(selection.source, selection.col)) {
+      setSelection(null);
+    }
   };
 
-  const handleFoundationClick = (suit) => {
-    const card = selectedCard();
-    if (!card || card.suit !== suit) return;
-    if (!canPlaceOnFoundation(card)) return;
-    setState((s) => {
-      const cleared = clearSelectionFrom(s);
-      const foundations = { ...cleared.foundations, [suit]: [...cleared.foundations[suit], card] };
-      return { ...cleared, foundations };
-    });
+  // --- Drag and drop (pointer events, works for mouse + touch) ---
+  const startDrag = (e, source, col) => {
+    const card = cardAt(source, col);
+    if (!card) return;
+    e.preventDefault();
     setSelection(null);
+    setDrag({ source, col, card, x: e.clientX, y: e.clientY });
   };
+
+  useEffect(() => {
+    if (!drag) return;
+    const onMove = (e) => setDrag((d) => (d ? { ...d, x: e.clientX, y: e.clientY } : d));
+    const onUp = (e) => {
+      const el = document.elementFromPoint(e.clientX, e.clientY);
+      const target = el?.closest("[data-drop]");
+      if (target) {
+        const [kind, key] = target.dataset.drop.split(":");
+        if (kind === "tableau") moveToTableau(drag.source, drag.col, Number(key));
+        else if (kind === "foundation" && drag.card.suit === key) moveToFoundation(drag.source, drag.col);
+      }
+      setDrag(null);
+    };
+    window.addEventListener("pointermove", onMove);
+    window.addEventListener("pointerup", onUp, { once: true });
+    return () => window.removeEventListener("pointermove", onMove);
+  }, [drag]);
 
   const giveUp = () => finishTry(false);
 
@@ -206,13 +251,13 @@ export default function SolitairePage() {
           <ArrowLeft className="h-4 w-4" /> Games
         </Link>
         <span className="text-xs text-muted-foreground">
-          {over ? (result.status === "completed" ? "Completed" : "Lost today") : `${remaining} tries left`}
+          {over ? (result.status === "completed" ? "Completed" : "Lost today") : "1 try today"}
         </span>
       </div>
 
       <header>
         <h1 className="font-heading text-4xl font-medium">Solitaire</h1>
-        <p className="mt-2 text-muted-foreground">Click a card, then click where it should go.</p>
+        <p className="mt-2 text-muted-foreground">Drag a card, or click it then click where it should go. Double-click to auto-play.</p>
       </header>
 
       {over ? (
@@ -244,9 +289,16 @@ export default function SolitairePage() {
               >
                 {state.stock.length === 0 ? <RotateCcw className="h-4 w-4" /> : state.stock.length}
               </div>
-              <div onClick={handleWasteClick}>
+              <div>
                 {state.waste.length > 0 ? (
-                  <Card card={state.waste[state.waste.length - 1]} selected={selection?.source === "waste"} />
+                  <Card
+                    card={state.waste[state.waste.length - 1]}
+                    selected={selection?.source === "waste"}
+                    dragging={drag?.source === "waste"}
+                    onClick={handleWasteClick}
+                    onDoubleClick={() => autoMove("waste")}
+                    onPointerDown={(e) => startDrag(e, "waste")}
+                  />
                 ) : (
                   <div className="h-16 w-12 rounded-md border border-dashed border-border sm:h-20 sm:w-14" />
                 )}
@@ -257,6 +309,7 @@ export default function SolitairePage() {
               {SUITS.map((suit) => (
                 <div
                   key={suit}
+                  data-drop={`foundation:${suit}`}
                   onClick={() => handleFoundationClick(suit)}
                   className={`flex h-16 w-12 items-center justify-center rounded-md border border-dashed sm:h-20 sm:w-14 ${
                     RED.has(suit) ? "text-destructive" : "text-foreground"
@@ -272,22 +325,28 @@ export default function SolitairePage() {
 
           <div className="grid grid-cols-7 gap-2">
             {state.tableau.map((pile, col) => (
-              <div key={col} className="relative flex min-h-[8rem] flex-col items-center">
+              <div key={col} data-drop={`tableau:${col}`} className="relative flex min-h-[8rem] flex-col items-center">
                 {pile.length === 0 ? (
                   <div
                     onClick={() => handleTableauTopClick(col)}
                     className="h-16 w-12 rounded-md border border-dashed border-border sm:h-20 sm:w-14"
                   />
                 ) : (
-                  pile.map((card, i) => (
-                    <div key={card.id} style={{ marginTop: i === 0 ? 0 : -48 }} className="relative">
-                      <Card
-                        card={card}
-                        onClick={() => (i === pile.length - 1 ? handleTableauTopClick(col) : undefined)}
-                        selected={selection?.source === "tableau" && selection.col === col && i === pile.length - 1}
-                      />
-                    </div>
-                  ))
+                  pile.map((card, i) => {
+                    const isTop = i === pile.length - 1;
+                    return (
+                      <div key={card.id} style={{ marginTop: i === 0 ? 0 : -48 }} className="relative">
+                        <Card
+                          card={card}
+                          onClick={isTop ? () => handleTableauTopClick(col) : undefined}
+                          onDoubleClick={isTop ? () => autoMove("tableau", col) : undefined}
+                          onPointerDown={isTop ? (e) => startDrag(e, "tableau", col) : undefined}
+                          selected={selection?.source === "tableau" && selection.col === col && isTop}
+                          dragging={drag?.source === "tableau" && drag.col === col}
+                        />
+                      </div>
+                    );
+                  })
                 )}
               </div>
             ))}
@@ -296,6 +355,20 @@ export default function SolitairePage() {
           <button onClick={giveUp} className="self-start text-sm text-muted-foreground underline">
             Give up this try
           </button>
+        </div>
+      )}
+
+      {drag && (
+        <div
+          className="pointer-events-none fixed z-50 flex h-16 w-12 flex-col items-center justify-center rounded-md border-2 border-primary bg-card font-heading text-sm font-semibold shadow-soft-lg sm:h-20 sm:w-14 sm:text-base"
+          style={{
+            left: drag.x - 24,
+            top: drag.y - 32,
+            color: RED.has(drag.card.suit) ? "hsl(var(--destructive))" : "hsl(var(--foreground))",
+          }}
+        >
+          <span>{rankLabel(drag.card.rank)}</span>
+          <span>{SUIT_SYMBOL[drag.card.suit]}</span>
         </div>
       )}
     </div>

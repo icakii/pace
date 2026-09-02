@@ -1,11 +1,12 @@
 import React, { useState, useEffect } from "react";
 import { Link } from "react-router-dom";
+import { motion } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
 import { recordAttempt, getTodayResult, attemptsRemaining, isGameOver } from "@/lib/gameResults";
 import { ArrowLeft, Loader2, Sun, Moon, Star, Cloud, Heart, Leaf, Flower2, Snowflake } from "lucide-react";
 
 const ICONS = [Sun, Moon, Star, Cloud, Heart, Leaf, Flower2, Snowflake];
-const MAX_FLIPS = 28;
+const MAX_FLIPS = 20;
 
 function shuffledDeck() {
   const deck = [...ICONS, ...ICONS].map((Icon, i) => ({ id: i, Icon }));
@@ -14,6 +15,31 @@ function shuffledDeck() {
     [deck[i], deck[j]] = [deck[j], deck[i]];
   }
   return deck;
+}
+
+function MemoryCard({ card, isUp, onClick }) {
+  const Icon = card.Icon;
+  return (
+    <button onClick={onClick} className="aspect-square" style={{ perspective: 800 }}>
+      <motion.div
+        className="relative h-full w-full"
+        style={{ transformStyle: "preserve-3d" }}
+        animate={{ rotateY: isUp ? 180 : 0 }}
+        transition={{ type: "spring", stiffness: 300, damping: 26 }}
+      >
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-2xl bg-card shadow-soft hover:bg-muted"
+          style={{ backfaceVisibility: "hidden" }}
+        />
+        <div
+          className="absolute inset-0 flex items-center justify-center rounded-2xl bg-primary/15 shadow-soft"
+          style={{ backfaceVisibility: "hidden", transform: "rotateY(180deg)" }}
+        >
+          <Icon className="h-7 w-7 text-primary" strokeWidth={1.6} />
+        </div>
+      </motion.div>
+    </button>
+  );
 }
 
 export default function MemoryMatchPage() {
@@ -34,7 +60,7 @@ export default function MemoryMatchPage() {
   const finished = matched.length === deck.length;
 
   const finishTry = async (won) => {
-    const points = won ? Math.max(150 - Math.max(0, flipCount - 16) * 8, 50) : 0;
+    const points = won ? Math.max(150 - Math.max(0, flipCount - 12) * 10, 50) : 0;
     const updated = await recordAttempt(user.id, "memory", { won, points });
     setResult(updated);
     setMessage(won ? `Matched! +${points} points` : "Out of flips for this try.");
@@ -72,12 +98,12 @@ export default function MemoryMatchPage() {
           setMatched((m) => [...m, a, b]);
           setFlipped([]);
           setBusy(false);
-        }, 400);
+        }, 500);
       } else {
         setTimeout(() => {
           setFlipped([]);
           setBusy(false);
-        }, 700);
+        }, 800);
       }
     }
   };
@@ -97,13 +123,13 @@ export default function MemoryMatchPage() {
           <ArrowLeft className="h-4 w-4" /> Games
         </Link>
         <span className="text-xs text-muted-foreground">
-          {over ? (result.status === "completed" ? "Completed" : "Lost today") : `${remaining} tries left`}
+          {over ? (result.status === "completed" ? "Completed" : "Lost today") : "1 try today"}
         </span>
       </div>
 
       <header>
         <h1 className="font-heading text-4xl font-medium">Memory Match</h1>
-        <p className="mt-2 text-muted-foreground">Find every pair before you run out of flips.</p>
+        <p className="mt-2 text-muted-foreground">Find every pair within {MAX_FLIPS} flips.</p>
       </header>
 
       {over ? (
@@ -125,23 +151,19 @@ export default function MemoryMatchPage() {
         </div>
       ) : (
         <>
-          {message && <p className="text-sm text-muted-foreground">{message}</p>}
+          <div className="flex items-center justify-between text-sm text-muted-foreground">
+            {message && <p>{message}</p>}
+            <p className="ml-auto">{flipCount} / {MAX_FLIPS} flips</p>
+          </div>
           <div className="grid grid-cols-4 gap-3 sm:gap-4">
-            {deck.map((card, i) => {
-              const isUp = flipped.includes(i) || matched.includes(i);
-              const Icon = card.Icon;
-              return (
-                <button
-                  key={card.id + "-" + i}
-                  onClick={() => handleFlip(i)}
-                  className={`flex aspect-square items-center justify-center rounded-2xl shadow-soft transition-all duration-300 ${
-                    isUp ? "bg-primary/15" : "bg-card hover:bg-muted"
-                  }`}
-                >
-                  {isUp && <Icon className="h-7 w-7 text-primary" strokeWidth={1.6} />}
-                </button>
-              );
-            })}
+            {deck.map((card, i) => (
+              <MemoryCard
+                key={card.id + "-" + i}
+                card={card}
+                isUp={flipped.includes(i) || matched.includes(i)}
+                onClick={() => handleFlip(i)}
+              />
+            ))}
           </div>
         </>
       )}

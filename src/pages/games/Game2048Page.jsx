@@ -1,11 +1,13 @@
 import React, { useState, useEffect, useCallback, useRef } from "react";
 import { Link } from "react-router-dom";
+import { motion, AnimatePresence } from "framer-motion";
 import { useAuth } from "@/lib/AuthContext";
 import { recordAttempt, getTodayResult, attemptsRemaining, isGameOver } from "@/lib/gameResults";
 import { ArrowLeft, Loader2 } from "lucide-react";
 
 const SIZE = 4;
 const TARGET_SCORE = 1000;
+const MAX_MOVES = 300;
 
 const TILE_COLORS = {
   2: "bg-card text-foreground",
@@ -21,80 +23,100 @@ const TILE_COLORS = {
   2048: "bg-accent text-accent-foreground",
 };
 
-function emptyBoard() {
-  return Array.from({ length: SIZE }, () => Array(SIZE).fill(0));
-}
+let idCounter = 1;
+const nextId = () => idCounter++;
 
-function addRandomTile(board) {
-  const empty = [];
-  board.forEach((row, r) => row.forEach((v, c) => { if (!v) empty.push([r, c]); }));
-  if (empty.length === 0) return board;
-  const [r, c] = empty[Math.floor(Math.random() * empty.length)];
-  const next = board.map((row) => [...row]);
-  next[r][c] = Math.random() < 0.9 ? 2 : 4;
-  return next;
-}
-
-function slideRow(row) {
-  const nums = row.filter((v) => v);
-  let gained = 0;
-  for (let i = 0; i < nums.length - 1; i++) {
-    if (nums[i] === nums[i + 1]) {
-      nums[i] *= 2;
-      gained += nums[i];
-      nums.splice(i + 1, 1);
-    }
-  }
-  while (nums.length < SIZE) nums.push(0);
-  return { row: nums, gained };
-}
-
-function move(board, dir) {
-  let rotated = board.map((r) => [...r]);
-  const rotate = (b) => b[0].map((_, c) => b.map((r) => r[c]).reverse());
-
-  let turns = 0;
-  if (dir === "up") turns = 1;
-  if (dir === "right") turns = 2;
-  if (dir === "down") turns = 3;
-  for (let i = 0; i < turns; i++) rotated = rotate(rotated);
-
-  let gained = 0;
-  let moved = false;
-  const result = rotated.map((row) => {
-    const { row: newRow, gained: g } = slideRow(row);
-    gained += g;
-    if (newRow.some((v, i) => v !== row[i])) moved = true;
-    return newRow;
-  });
-
-  let finalBoard = result;
-  const backTurns = (4 - turns) % 4;
-  for (let i = 0; i < backTurns; i++) finalBoard = rotate(finalBoard);
-
-  return { board: finalBoard, gained, moved };
-}
-
-function hasMoves(board) {
+function emptyCells(tiles) {
+  const occupied = new Set(tiles.map((t) => `${t.r}-${t.c}`));
+  const cells = [];
   for (let r = 0; r < SIZE; r++) {
     for (let c = 0; c < SIZE; c++) {
-      if (!board[r][c]) return true;
-      if (c < SIZE - 1 && board[r][c] === board[r][c + 1]) return true;
-      if (r < SIZE - 1 && board[r][c] === board[r + 1][c]) return true;
+      if (!occupied.has(`${r}-${c}`)) cells.push([r, c]);
+    }
+  }
+  return cells;
+}
+
+function spawnTile(tiles) {
+  const cells = emptyCells(tiles);
+  if (cells.length === 0) return tiles;
+  const [r, c] = cells[Math.floor(Math.random() * cells.length)];
+  const value = Math.random() < 0.9 ? 2 : 4;
+  return [...tiles, { id: nextId(), r, c, value }];
+}
+
+function initTiles() {
+  return spawnTile(spawnTile([]));
+}
+
+function getLineCells(dir, lineIdx) {
+  const cells = [];
+  for (let i = 0; i < SIZE; i++) {
+    if (dir === "left") cells.push([lineIdx, i]);
+    else if (dir === "right") cells.push([lineIdx, SIZE - 1 - i]);
+    else if (dir === "up") cells.push([i, lineIdx]);
+    else if (dir === "down") cells.push([SIZE - 1 - i, lineIdx]);
+  }
+  return cells;
+}
+
+function move(tiles, dir) {
+  const grid = {};
+  tiles.forEach((t) => { grid[`${t.r}-${t.c}`] = t; });
+
+  const nextTiles = [];
+  const removedIds = new Set();
+  let gained = 0;
+  let moved = false;
+
+  for (let lineIdx = 0; lineIdx < SIZE; lineIdx++) {
+    const cells = getLineCells(dir, lineIdx);
+    const lineTiles = cells.map(([r, c]) => grid[`${r}-${c}`]).filter(Boolean);
+
+    let k = 0;
+    let i = 0;
+    while (i < lineTiles.length) {
+      const cur = lineTiles[i];
+      const [newR, newC] = cells[k];
+      if (i + 1 < lineTiles.length && lineTiles[i + 1].value === cur.value) {
+        const merged = lineTiles[i + 1];
+        gained += cur.value * 2;
+        nextTiles.push({ id: cur.id, r: newR, c: newC, value: cur.value * 2 });
+        removedIds.add(merged.id);
+        if (cur.r !== newR || cur.c !== newC || merged.r !== newR || merged.c !== newC) moved = true;
+        i += 2;
+      } else {
+        nextTiles.push({ id: cur.id, r: newR, c: newC, value: cur.value });
+        if (cur.r !== newR || cur.c !== newC) moved = true;
+        i += 1;
+      }
+      k += 1;
+    }
+  }
+
+  return { tiles: nextTiles, gained, moved };
+}
+
+function hasMoves(tiles) {
+  if (tiles.length < SIZE * SIZE) return true;
+  const grid = {};
+  tiles.forEach((t) => { grid[`${t.r}-${t.c}`] = t.value; });
+  for (let r = 0; r < SIZE; r++) {
+    for (let c = 0; c < SIZE; c++) {
+      const v = grid[`${r}-${c}`];
+      if (c < SIZE - 1 && grid[`${r}-${c + 1}`] === v) return true;
+      if (r < SIZE - 1 && grid[`${r + 1}-${c}`] === v) return true;
     }
   }
   return false;
 }
 
-function initBoard() {
-  return addRandomTile(addRandomTile(emptyBoard()));
-}
-
 export default function Game2048Page() {
   const { user } = useAuth();
   const [result, setResult] = useState(undefined);
-  const [board, setBoard] = useState(initBoard);
+  const [tiles, setTiles] = useState(initTiles);
   const [score, setScore] = useState(0);
+  const [moves, setMoves] = useState(0);
   const [ended, setEnded] = useState(false);
   const finishedRef = useRef(false);
   const touchStart = useRef(null);
@@ -115,19 +137,21 @@ export default function Game2048Page() {
 
   const handleMove = useCallback((dir) => {
     if (ended || isGameOver(result)) return;
-    setBoard((prev) => {
-      const { board: next, gained, moved } = move(prev, dir);
-      if (!moved) return prev;
-      const withTile = addRandomTile(next);
+    setTiles((prev) => {
+      const { tiles: moved, gained, moved: didMove } = move(prev, dir);
+      if (!didMove) return prev;
+      const withTile = spawnTile(moved);
+      const newMoveCount = moves + 1;
+      setMoves(newMoveCount);
       setScore((s) => {
         const newScore = s + gained;
         if (newScore >= TARGET_SCORE) finishTry(true, newScore);
-        else if (!hasMoves(withTile)) finishTry(false, newScore);
+        else if (!hasMoves(withTile) || newMoveCount >= MAX_MOVES) finishTry(false, newScore);
         return newScore;
       });
       return withTile;
     });
-  }, [ended, result, finishTry]);
+  }, [ended, result, finishTry, moves]);
 
   useEffect(() => {
     const onKey = (e) => {
@@ -153,8 +177,9 @@ export default function Game2048Page() {
   };
 
   const startNewTry = () => {
-    setBoard(initBoard());
+    setTiles(initTiles());
     setScore(0);
+    setMoves(0);
     setEnded(false);
     finishedRef.current = false;
   };
@@ -173,14 +198,14 @@ export default function Game2048Page() {
           <ArrowLeft className="h-4 w-4" /> Games
         </Link>
         <span className="text-xs text-muted-foreground">
-          {over ? (result.status === "completed" ? "Completed" : "Lost today") : `${remaining} tries left`}
+          {over ? (result.status === "completed" ? "Completed" : "Lost today") : "1 try today"}
         </span>
       </div>
 
       <header className="flex items-center justify-between">
         <div>
           <h1 className="font-heading text-4xl font-medium">2048</h1>
-          <p className="mt-2 text-muted-foreground">Reach {TARGET_SCORE} points to win a try.</p>
+          <p className="mt-2 text-muted-foreground">Reach {TARGET_SCORE} points within {MAX_MOVES} moves.</p>
         </div>
         <div className="rounded-2xl bg-card px-4 py-2 text-center shadow-soft">
           <p className="text-[10px] uppercase tracking-wider text-muted-foreground">Score</p>
@@ -200,25 +225,36 @@ export default function Game2048Page() {
           <div
             onTouchStart={onTouchStart}
             onTouchEnd={onTouchEnd}
-            className="mx-auto grid w-full max-w-md grid-cols-4 gap-2 rounded-3xl bg-card p-3 shadow-soft sm:gap-3 sm:p-4"
+            className="relative mx-auto grid aspect-square w-full max-w-md grid-cols-4 grid-rows-4 gap-2 rounded-3xl bg-card p-3 shadow-soft sm:gap-3 sm:p-4"
           >
-            {board.map((row, r) =>
-              row.map((v, c) => (
-                <div
-                  key={`${r}-${c}`}
-                  className={`flex aspect-square items-center justify-center rounded-xl font-heading text-lg font-semibold transition-all sm:text-2xl ${
-                    v ? TILE_COLORS[v] || "bg-accent text-accent-foreground" : "bg-background/60"
+            {Array.from({ length: SIZE * SIZE }).map((_, i) => (
+              <div key={i} className="rounded-xl bg-background/60" />
+            ))}
+            <AnimatePresence>
+              {tiles.map((t) => (
+                <motion.div
+                  key={t.id}
+                  layout
+                  initial={{ scale: 0 }}
+                  animate={{ scale: 1 }}
+                  exit={{ scale: 0, opacity: 0 }}
+                  transition={{ type: "spring", stiffness: 380, damping: 30 }}
+                  style={{ gridRow: t.r + 1, gridColumn: t.c + 1 }}
+                  className={`flex items-center justify-center rounded-xl font-heading text-lg font-semibold sm:text-2xl ${
+                    TILE_COLORS[t.value] || "bg-accent text-accent-foreground"
                   }`}
                 >
-                  {v || ""}
-                </div>
-              ))
-            )}
+                  {t.value}
+                </motion.div>
+              ))}
+            </AnimatePresence>
           </div>
 
           {ended && (
             <div className="flex flex-col items-center gap-4 rounded-3xl bg-card p-8 text-center shadow-soft">
-              <p className="font-heading text-xl font-medium">No more moves for that try.</p>
+              <p className="font-heading text-xl font-medium">
+                {moves >= MAX_MOVES ? "Out of moves for that try." : "No more moves for that try."}
+              </p>
               <button
                 onClick={startNewTry}
                 className="rounded-lg bg-primary px-5 py-2.5 text-sm font-medium text-primary-foreground shadow-sm hover:opacity-90"

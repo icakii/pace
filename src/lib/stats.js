@@ -1,7 +1,7 @@
 import { format, parseISO, subDays, differenceInCalendarDays } from "date-fns";
 import { isRecurring } from "@/lib/occurrences";
 
-const STREAK_THRESHOLD = 3;
+const STREAK_THRESHOLD = 1;
 
 export function countTotalCompleted(tasks) {
   let total = 0;

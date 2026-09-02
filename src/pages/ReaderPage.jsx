@@ -17,6 +17,7 @@ export default function ReaderPage() {
   const [loading, setLoading] = useState(true);
   const [toc, setToc] = useState([]);
   const [isFullscreen, setIsFullscreen] = useState(false);
+  const [fullscreenSupported, setFullscreenSupported] = useState(false);
   const renditionRef = useRef(null);
   const containerRef = useRef(null);
   const saveTimeout = useRef(null);
@@ -52,6 +53,13 @@ export default function ReaderPage() {
   useEffect(() => {
     const onFullscreenChange = () => setIsFullscreen(!!document.fullscreenElement);
     document.addEventListener("fullscreenchange", onFullscreenChange);
+    // iOS Safari has no Fullscreen API for arbitrary elements (only <video>),
+    // so detect real support rather than showing a button that silently does nothing.
+    setFullscreenSupported(
+      typeof document.exitFullscreen === "function" &&
+      typeof containerRef.current?.requestFullscreen === "function" &&
+      document.fullscreenEnabled !== false
+    );
     return () => document.removeEventListener("fullscreenchange", onFullscreenChange);
   }, []);
 
@@ -78,11 +86,15 @@ export default function ReaderPage() {
     renditionRef.current?.display(href);
   };
 
-  const toggleFullscreen = () => {
-    if (document.fullscreenElement) {
-      document.exitFullscreen();
-    } else {
-      containerRef.current?.requestFullscreen();
+  const toggleFullscreen = async () => {
+    try {
+      if (document.fullscreenElement) {
+        await document.exitFullscreen();
+      } else {
+        await containerRef.current?.requestFullscreen();
+      }
+    } catch {
+      // Some mobile browsers reject requestFullscreen despite reporting support.
     }
   };
 
@@ -121,7 +133,11 @@ export default function ReaderPage() {
             <SelectTrigger className="max-w-[45%] flex-1 sm:max-w-xs">
               <SelectValue placeholder="Chapters" />
             </SelectTrigger>
-            <SelectContent>
+            {/* Portal into the reader's own fullscreen container — the browser's
+                Fullscreen API puts the fullscreened element in a special "top layer",
+                so a dropdown portaled to document.body (the default) renders behind
+                it and is invisible/unclickable while in real fullscreen mode. */}
+            <SelectContent container={containerRef.current}>
               {toc.map((item, i) => (
                 <SelectItem key={item.href || i} value={item.href}>{item.label?.trim() || `Chapter ${i + 1}`}</SelectItem>
               ))}
@@ -145,13 +161,15 @@ export default function ReaderPage() {
           >
             <Plus className="h-4 w-4" />
           </button>
-          <button
-            onClick={toggleFullscreen}
-            className="rounded-lg p-2 text-muted-foreground hover:bg-muted"
-            aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
-          >
-            {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
-          </button>
+          {fullscreenSupported && (
+            <button
+              onClick={toggleFullscreen}
+              className="rounded-lg p-2 text-muted-foreground hover:bg-muted"
+              aria-label={isFullscreen ? "Exit fullscreen" : "Enter fullscreen"}
+            >
+              {isFullscreen ? <Minimize className="h-4 w-4" /> : <Maximize className="h-4 w-4" />}
+            </button>
+          )}
         </div>
       </div>
 

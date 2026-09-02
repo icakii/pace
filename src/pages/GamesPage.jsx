@@ -38,7 +38,7 @@ export default function GamesPage() {
     <div className="flex flex-col gap-8">
       <header>
         <h1 className="font-heading text-4xl md:text-5xl font-medium">Games</h1>
-        <p className="mt-2 text-muted-foreground">A few minutes to reset. Three tries a day, each.</p>
+        <p className="mt-2 text-muted-foreground">A few minutes to reset. One try a day, each.</p>
       </header>
 
       {!loading && <XPBar points={totalPoints} />}

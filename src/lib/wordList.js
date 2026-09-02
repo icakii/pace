@@ -30,7 +30,3 @@ export function getWordOfTheDay(date = new Date()) {
   const index = ((dayCount % WORDS.length) + WORDS.length) % WORDS.length;
   return WORDS[index];
 }
-
-export function isValidWord(word) {
-  return WORDS.includes(word.toUpperCase());
-}

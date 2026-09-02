@@ -2,7 +2,7 @@ import React, { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { recordAttempt, getTodayResult, attemptsRemaining, isGameOver } from "@/lib/gameResults";
-import { getWordOfTheDay, isValidWord } from "@/lib/wordList";
+import { getWordOfTheDay } from "@/lib/wordList";
 import { ArrowLeft, Loader2, Delete } from "lucide-react";
 
 const MAX_GUESSES = 6;
@@ -65,10 +65,6 @@ export default function WordPuzzlePage() {
       setMessage("Not enough letters");
       return;
     }
-    if (!isValidWord(current)) {
-      setMessage("Not in word list");
-      return;
-    }
     setMessage("");
     const nextGuesses = [...guesses, current];
     setGuesses(nextGuesses);
@@ -112,7 +108,7 @@ export default function WordPuzzlePage() {
           <ArrowLeft className="h-4 w-4" /> Games
         </Link>
         <span className="text-xs text-muted-foreground">
-          {over ? (result.status === "completed" ? "Completed" : "Lost today") : `${remaining} tries left`}
+          {over ? (result.status === "completed" ? "Completed" : "Lost today") : "1 try today"}
         </span>
       </div>
 

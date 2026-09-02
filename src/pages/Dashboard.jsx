@@ -80,7 +80,7 @@ export default function Dashboard() {
         {!loading && (
           <Link
             to="/profile"
-            title="Complete 3+ tasks in a day to keep your streak alive"
+            title="Complete a task each day to keep your streak alive"
             className={`flex items-center gap-1.5 rounded-full px-3.5 py-2 text-sm font-medium shadow-soft transition-transform hover:scale-105 ${
               streakActive ? "bg-accent/15 text-accent" : "bg-card text-muted-foreground"
             }`}
