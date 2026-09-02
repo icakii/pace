@@ -1,15 +1,18 @@
 import React, { useState, useEffect } from "react";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
-import { Flame, CalendarDays, CheckCircle2, Loader2, LogOut, Lock } from "lucide-react";
+import { Flame, CalendarDays, CheckCircle2, Gamepad2, Loader2, LogOut, Lock } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { countTotalCompleted, computeStreak, daysSince, STREAK_MIN } from "@/lib/stats";
+import { computeGameStreak, getTotalPoints, GAME_STREAK_MIN } from "@/lib/gameStats";
+import XPBar from "@/components/XPBar";
 
 export default function ProfilePage() {
   const { user, logout } = useAuth();
   const [tasks, setTasks] = useState([]);
+  const [gameResults, setGameResults] = useState([]);
   const [loading, setLoading] = useState(true);
 
   const [newPassword, setNewPassword] = useState("");
@@ -20,11 +23,14 @@ export default function ProfilePage() {
 
   useEffect(() => {
     if (!user) return;
-    supabase
-      .from("tasks")
-      .select("*")
-      .eq("user_id", user.id)
-      .then(({ data }) => setTasks(data || []))
+    Promise.all([
+      supabase.from("tasks").select("*").eq("user_id", user.id),
+      supabase.from("game_results").select("*").eq("user_id", user.id),
+    ])
+      .then(([tasksRes, gamesRes]) => {
+        setTasks(tasksRes.data || []);
+        setGameResults(gamesRes.data || []);
+      })
       .finally(() => setLoading(false));
   }, [user]);
 
@@ -32,6 +38,9 @@ export default function ProfilePage() {
   const streakActive = streak >= STREAK_MIN;
   const totalCompleted = countTotalCompleted(tasks);
   const activeDays = daysSince(user?.created_at);
+  const gameStreak = computeGameStreak(gameResults);
+  const gameStreakActive = gameStreak >= GAME_STREAK_MIN;
+  const totalPoints = getTotalPoints(gameResults);
 
   const handlePasswordChange = async (e) => {
     e.preventDefault();
@@ -64,7 +73,7 @@ export default function ProfilePage() {
         <p className="mt-2 text-muted-foreground">{user?.email}</p>
       </header>
 
-      <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+      <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 lg:grid-cols-4">
         <div className="rounded-3xl bg-card p-6 shadow-soft">
           <CalendarDays className="h-6 w-6 text-primary" strokeWidth={1.6} />
           <p className="mt-4 font-heading text-3xl font-medium">{loading ? "—" : activeDays}</p>
@@ -87,7 +96,20 @@ export default function ProfilePage() {
           <p className="mt-1 text-sm text-muted-foreground">Day streak</p>
           <p className="mt-1 text-xs text-muted-foreground/70">Complete 3+ tasks in a day to count</p>
         </div>
+        <div className="rounded-3xl bg-card p-6 shadow-soft">
+          <Gamepad2
+            className={`h-6 w-6 ${gameStreakActive ? "text-accent" : "text-muted-foreground"}`}
+            strokeWidth={1.6}
+          />
+          <p className={`mt-4 font-heading text-3xl font-medium ${gameStreakActive ? "text-accent" : "text-muted-foreground"}`}>
+            {loading ? "—" : gameStreak}
+          </p>
+          <p className="mt-1 text-sm text-muted-foreground">Game streak</p>
+          <p className="mt-1 text-xs text-muted-foreground/70">Complete 3+ games in a day to count</p>
+        </div>
       </div>
+
+      {!loading && <XPBar points={totalPoints} />}
 
       <section className="max-w-md rounded-3xl bg-card p-6 shadow-soft">
         <h2 className="font-heading text-xl font-medium">Change password</h2>

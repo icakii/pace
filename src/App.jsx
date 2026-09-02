@@ -16,6 +16,11 @@ import ThoughtsPage from "@/pages/ThoughtsPage";
 import QuotePage from "@/pages/QuotePage";
 import ProfilePage from "@/pages/ProfilePage";
 import LibraryPage from "@/pages/LibraryPage";
+import GamesPage from "@/pages/GamesPage";
+import SolitairePage from "@/pages/games/SolitairePage";
+import WordPuzzlePage from "@/pages/games/WordPuzzlePage";
+import MemoryMatchPage from "@/pages/games/MemoryMatchPage";
+import Game2048Page from "@/pages/games/Game2048Page";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -63,6 +68,11 @@ export default function App() {
                 <Route path="/thoughts" element={<ThoughtsPage />} />
                 <Route path="/quote" element={<QuotePage />} />
                 <Route path="/library" element={<LibraryPage />} />
+                <Route path="/games" element={<GamesPage />} />
+                <Route path="/games/solitaire" element={<SolitairePage />} />
+                <Route path="/games/wordle" element={<WordPuzzlePage />} />
+                <Route path="/games/memory" element={<MemoryMatchPage />} />
+                <Route path="/games/2048" element={<Game2048Page />} />
                 <Route path="/profile" element={<ProfilePage />} />
               </Route>
             </Route>
