@@ -5,8 +5,10 @@ import { Flame, CalendarDays, CheckCircle2, Gamepad2, Loader2, LogOut, Lock } fr
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Switch } from "@/components/ui/switch";
 import { countTotalCompleted, computeStreak, daysSince, STREAK_MIN } from "@/lib/stats";
 import { computeGameStreak, getTotalPoints, GAME_STREAK_MIN } from "@/lib/gameStats";
+import { pushSupported, getNotificationSettings, enablePush, disablePush, setThoughtsReminderTime } from "@/lib/push";
 import XPBar from "@/components/XPBar";
 
 export default function ProfilePage() {
@@ -20,6 +22,15 @@ export default function ProfilePage() {
   const [pwError, setPwError] = useState("");
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwLoading, setPwLoading] = useState(false);
+
+  const [notifSettings, setNotifSettings] = useState(null);
+  const [notifError, setNotifError] = useState("");
+  const [notifLoadingKind, setNotifLoadingKind] = useState(null);
+
+  useEffect(() => {
+    if (!user) return;
+    getNotificationSettings(user.id).then(setNotifSettings);
+  }, [user]);
 
   useEffect(() => {
     if (!user) return;
@@ -64,6 +75,32 @@ export default function ProfilePage() {
     setPwSuccess(true);
     setNewPassword("");
     setConfirmPassword("");
+  };
+
+  const handleToggle = async (kind, checked) => {
+    if (!user) return;
+    setNotifError("");
+    setNotifLoadingKind(kind);
+    try {
+      const updated = checked ? await enablePush(user.id, kind) : await disablePush(user.id, kind);
+      setNotifSettings(updated);
+    } catch (err) {
+      setNotifError(err.message || "Something went wrong");
+    } finally {
+      setNotifLoadingKind(null);
+    }
+  };
+
+  const handleThoughtsTime = async (e) => {
+    if (!user) return;
+    const time = e.target.value;
+    setNotifSettings((prev) => ({ ...prev, thoughts_reminder_time: time }));
+    try {
+      const updated = await setThoughtsReminderTime(user.id, time);
+      setNotifSettings(updated);
+    } catch {
+      // keep optimistic value; will resync on next load
+    }
   };
 
   return (
@@ -158,6 +195,70 @@ export default function ProfilePage() {
             Update password
           </Button>
         </form>
+      </section>
+
+      <section className="max-w-md rounded-3xl bg-card p-6 shadow-soft">
+        <h2 className="font-heading text-xl font-medium">Notifications</h2>
+        <p className="mt-1 text-sm text-muted-foreground">Get reminders even when Pace isn't open.</p>
+
+        {!pushSupported() ? (
+          <p className="mt-4 text-sm text-muted-foreground">
+            Push notifications aren't supported in this browser. On iPhone, install Pace to your home screen first (Share → Add to Home Screen).
+          </p>
+        ) : (
+          <div className="mt-4 space-y-5">
+            {notifError && (
+              <div className="rounded-lg bg-destructive/10 p-3 text-sm text-destructive">{notifError}</div>
+            )}
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Task reminders</p>
+                <p className="text-xs text-muted-foreground">
+                  An hour before a timed task, or a midday nudge for tasks without a set time.
+                </p>
+              </div>
+              <div className="flex items-center gap-2">
+                {notifLoadingKind === "task_reminders" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                <Switch
+                  checked={!!notifSettings?.task_reminders}
+                  onCheckedChange={(checked) => handleToggle("task_reminders", checked)}
+                  disabled={notifLoadingKind === "task_reminders" || !notifSettings}
+                />
+              </div>
+            </div>
+
+            <div className="flex items-center justify-between gap-4">
+              <div>
+                <p className="text-sm font-medium">Write your thoughts</p>
+                <p className="text-xs text-muted-foreground">Daily reminder if you haven't written a thought yet.</p>
+              </div>
+              <div className="flex items-center gap-2">
+                {notifLoadingKind === "thoughts_reminder" && <Loader2 className="h-4 w-4 animate-spin text-muted-foreground" />}
+                <Switch
+                  checked={!!notifSettings?.thoughts_reminder}
+                  onCheckedChange={(checked) => handleToggle("thoughts_reminder", checked)}
+                  disabled={notifLoadingKind === "thoughts_reminder" || !notifSettings}
+                />
+              </div>
+            </div>
+
+            {notifSettings?.thoughts_reminder && (
+              <div className="flex items-center justify-between gap-4 pl-1">
+                <Label htmlFor="thoughts-time" className="text-xs text-muted-foreground">
+                  Reminder time
+                </Label>
+                <Input
+                  id="thoughts-time"
+                  type="time"
+                  value={notifSettings?.thoughts_reminder_time?.slice(0, 5) || "20:00"}
+                  onChange={handleThoughtsTime}
+                  className="w-32"
+                />
+              </div>
+            )}
+          </div>
+        )}
       </section>
 
       <div>

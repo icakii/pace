@@ -32,7 +32,8 @@
     "react-reader": "^2.0.15",
     "react-router-dom": "^6.28.0",
     "sonner": "^1.5.0",
-    "tailwind-merge": "^2.5.4"
+    "tailwind-merge": "^2.5.4",
+    "workbox-precaching": "^7.4.1"
   },
   "devDependencies": {
     "@vitejs/plugin-react": "^4.3.3",

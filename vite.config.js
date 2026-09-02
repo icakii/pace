@@ -8,6 +8,14 @@ export default defineConfig({
     react(),
     VitePWA({
       registerType: "autoUpdate",
+      strategies: "injectManifest",
+      srcDir: "src",
+      filename: "sw.js",
+      injectManifest: {
+        // The custom service worker only needs the app-shell files precached;
+        // large binary assets (books, images) are fetched on demand instead.
+        maximumFileSizeToCacheInBytes: 5 * 1024 * 1024,
+      },
       includeAssets: ["icons/apple-touch-icon.png"],
       manifest: {
         name: "Pace",
