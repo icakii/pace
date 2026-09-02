@@ -14,7 +14,7 @@ const nav = [
 
 export default function Sidebar() {
   return (
-    <aside className="hidden md:flex w-64 shrink-0 flex-col border-r border-border bg-sidebar/60 backdrop-blur-sm px-5 py-8">
+    <aside className="sticky top-0 hidden h-screen w-64 shrink-0 flex-col overflow-y-auto border-r border-border bg-sidebar/60 backdrop-blur-sm px-5 py-8 md:flex">
       <Link to="/" className="mb-10 px-2">
         <h1 className="font-heading text-3xl font-semibold tracking-tight text-foreground">
           Pace
