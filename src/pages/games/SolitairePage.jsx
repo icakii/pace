@@ -2,7 +2,6 @@ import React, { useState, useEffect, useMemo, useRef } from "react";
 import { Link } from "react-router-dom";
 import { useAuth } from "@/lib/AuthContext";
 import { recordAttempt, getTodayResult, attemptsRemaining, isGameOver } from "@/lib/gameResults";
-import { MAX_UNDOS } from "@/lib/gameStats";
 import { ArrowLeft, Loader2, RotateCcw, Undo2 } from "lucide-react";
 
 const SUITS = ["S", "H", "D", "C"];
@@ -86,7 +85,6 @@ export default function SolitairePage() {
   const [result, setResult] = useState(undefined);
   const [state, setState] = useState(deal);
   const [history, setHistory] = useState([]);
-  const [undosUsed, setUndosUsed] = useState(0);
   const [selection, setSelection] = useState(null); // { source: 'tableau'|'waste', col, startIndex }
   const [ended, setEnded] = useState(false);
   const [drag, setDrag] = useState(null); // { card, count, x, y }
@@ -119,12 +117,10 @@ export default function SolitairePage() {
   };
 
   const undo = () => {
-    if (undosUsed >= MAX_UNDOS) return;
     setHistory((h) => {
       if (h.length === 0) return h;
       setState(h[h.length - 1]);
       setSelection(null);
-      setUndosUsed((n) => n + 1);
       return h.slice(0, -1);
     });
   };
@@ -288,7 +284,6 @@ export default function SolitairePage() {
   const startNewTry = () => {
     setState(deal());
     setHistory([]);
-    setUndosUsed(0);
     setSelection(null);
     setEnded(false);
   };
@@ -319,10 +314,10 @@ export default function SolitairePage() {
         {!over && !ended && (
           <button
             onClick={undo}
-            disabled={history.length === 0 || undosUsed >= MAX_UNDOS}
+            disabled={history.length === 0}
             className="inline-flex items-center gap-1.5 rounded-lg bg-card px-3 py-2 text-sm text-muted-foreground shadow-soft hover:text-foreground disabled:opacity-40"
           >
-            <Undo2 className="h-4 w-4" /> Undo ({MAX_UNDOS - undosUsed} left)
+            <Undo2 className="h-4 w-4" /> Undo
           </button>
         )}
       </header>
