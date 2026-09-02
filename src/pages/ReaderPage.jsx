@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { ReactReader } from "react-reader";
+import { ReactReader, ReactReaderStyle } from "react-reader";
 import { supabase } from "@/lib/supabaseClient";
 import { useAuth } from "@/lib/AuthContext";
 import { X, Minus, Plus, Loader2 } from "lucide-react";
@@ -123,8 +123,9 @@ export default function ReaderPage() {
           }}
           epubOptions={{ flow: "paginated" }}
           readerStyles={{
-            container: { backgroundColor: "transparent" },
-            reader: { backgroundColor: "transparent" },
+            ...ReactReaderStyle,
+            container: { ...ReactReaderStyle.container, backgroundColor: "transparent" },
+            readerArea: { ...ReactReaderStyle.readerArea, backgroundColor: "transparent" },
           }}
         />
       </div>
