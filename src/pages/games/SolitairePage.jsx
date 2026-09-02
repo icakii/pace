@@ -200,8 +200,9 @@ export default function SolitairePage() {
   };
 
   // Double-click: try foundation first (single card only), else a random valid tableau column.
-  const autoMove = (source, col) => {
-    const startIndex = source === "tableau" ? state.tableau[col].length - 1 : 0;
+  // startIndex is the specific card double-clicked, not necessarily the top of the pile,
+  // so double-clicking anywhere in a movable stack moves that whole stack.
+  const autoMove = (source, col, startIndex) => {
     if (moveToFoundation(source, col, startIndex)) return;
     const seq = sequenceAt(source, col, startIndex);
     if (seq.length === 0) return;
@@ -362,7 +363,7 @@ export default function SolitairePage() {
                     selected={selection?.source === "waste"}
                     dragging={drag && dragInfoRef.current?.source === "waste"}
                     onClick={handleWasteClick}
-                    onDoubleClick={() => autoMove("waste", null)}
+                    onDoubleClick={() => autoMove("waste", null, 0)}
                     onPointerDown={(e) => startDrag(e, "waste", null, 0)}
                   />
                 ) : (
@@ -408,7 +409,7 @@ export default function SolitairePage() {
                           <Card
                             card={card}
                             onClick={isMovable ? () => handleTableauCardClick(col, i) : undefined}
-                            onDoubleClick={isMovable ? () => autoMove("tableau", col) : undefined}
+                            onDoubleClick={isMovable ? () => autoMove("tableau", col, i) : undefined}
                             onPointerDown={isMovable ? (e) => startDrag(e, "tableau", col, i) : undefined}
                             selected={isSelected}
                             dragging={drag && dragInfoRef.current?.source === "tableau" && dragInfoRef.current?.col === col && i >= dragInfoRef.current?.startIndex}
