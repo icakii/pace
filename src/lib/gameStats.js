@@ -47,3 +47,4 @@ export function getLevelProgress(points) {
 
 export const GAME_STREAK_MIN = STREAK_THRESHOLD;
 export const MAX_ATTEMPTS = 1;
+export const MAX_UNDOS = 5;
