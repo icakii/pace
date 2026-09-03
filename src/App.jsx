@@ -21,6 +21,7 @@ import SolitairePage from "@/pages/games/SolitairePage";
 import WordPuzzlePage from "@/pages/games/WordPuzzlePage";
 import MemoryMatchPage from "@/pages/games/MemoryMatchPage";
 import Game2048Page from "@/pages/games/Game2048Page";
+import Welcome from "@/pages/Welcome";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -42,10 +43,21 @@ export default function App() {
         <BrowserRouter>
           <ScrollToTop />
           <Routes>
+            <Route path="/welcome" element={<Welcome />} />
             <Route path="/login" element={<Login />} />
             <Route path="/register" element={<Register />} />
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
+
+            <Route
+              element={
+                <ProtectedRoute unauthenticatedElement={<Navigate to="/welcome" replace />} />
+              }
+            >
+              <Route element={<Layout />}>
+                <Route path="/" element={<Dashboard />} />
+              </Route>
+            </Route>
 
             <Route
               element={
@@ -62,7 +74,6 @@ export default function App() {
               />
 
               <Route element={<Layout />}>
-                <Route path="/" element={<Dashboard />} />
                 <Route path="/calendar" element={<CalendarPage />} />
                 <Route path="/tasks" element={<TasksPage />} />
                 <Route path="/thoughts" element={<ThoughtsPage />} />
