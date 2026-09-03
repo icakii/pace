@@ -61,7 +61,10 @@ export default function Welcome() {
 
   const handleInstallClick = async () => {
     const accepted = await promptInstall();
-    if (accepted) setInstalled(true);
+    if (accepted) {
+      setInstalled(true);
+      setTimeout(() => navigate("/login"), 1200);
+    }
   };
 
   const goNext = () => {
@@ -127,7 +130,7 @@ export default function Welcome() {
                   {isStandalone() ? (
                     <p className="text-center text-sm text-primary">You're already using the installed app 🎉</p>
                   ) : installed ? (
-                    <p className="text-center text-sm text-primary">Installed! Check your home screen.</p>
+                    <p className="text-center text-sm text-primary">Installed! Taking you to log in…</p>
                   ) : canInstall ? (
                     <Button variant="secondary" className="w-full h-11" onClick={handleInstallClick}>
                       Install now

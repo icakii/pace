@@ -23,6 +23,7 @@ import MemoryMatchPage from "@/pages/games/MemoryMatchPage";
 import Game2048Page from "@/pages/games/Game2048Page";
 import Landing from "@/pages/Landing";
 import Welcome from "@/pages/Welcome";
+import { isStandalone } from "@/lib/installPrompt";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
 import ForgotPassword from "@/pages/ForgotPassword";
@@ -37,6 +38,9 @@ const ReaderFallback = () => (
   </div>
 );
 
+// Installed/standalone launches skip the marketing pitch and go straight to login.
+const LoggedOutRoot = () => (isStandalone() ? <Navigate to="/login" replace /> : <Landing />);
+
 export default function App() {
   return (
     <QueryClientProvider client={queryClientInstance}>
@@ -50,7 +54,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route element={<ProtectedRoute unauthenticatedElement={<Landing />} />}>
+            <Route element={<ProtectedRoute unauthenticatedElement={<LoggedOutRoot />} />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
               </Route>
