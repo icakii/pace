@@ -6,7 +6,6 @@ import {
   CheckSquare,
   BookOpen,
   Gamepad2,
-  Sparkles,
   MoreVertical,
   Share,
   SquarePlus,
@@ -14,6 +13,8 @@ import {
   ArrowLeft,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
+import { useInstallPrompt, isStandalone } from "@/lib/installPrompt";
 
 const SEEN_KEY = "pace_seen_welcome";
 
@@ -31,6 +32,7 @@ const SLIDES = [
   },
   {
     kind: "install",
+    platform: "android",
     title: "Add it to your Android home screen",
     subtitle: "Pace works best installed like a real app — it's free and takes a few seconds.",
     steps: [
@@ -41,6 +43,7 @@ const SLIDES = [
   },
   {
     kind: "install",
+    platform: "ios",
     title: "Add it to your iPhone home screen",
     subtitle: "On iOS, installing to your home screen is what unlocks notifications.",
     steps: [
@@ -56,6 +59,13 @@ export default function Welcome() {
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
   const [skipped, setSkipped] = useState(false);
+  const [installed, setInstalled] = useState(false);
+  const { canInstall, promptInstall } = useInstallPrompt();
+
+  const handleInstallClick = async () => {
+    const accepted = await promptInstall();
+    if (accepted) setInstalled(true);
+  };
 
   useEffect(() => {
     if (localStorage.getItem(SEEN_KEY) === "true") {
@@ -95,10 +105,8 @@ export default function Welcome() {
   return (
     <div className="min-h-screen flex flex-col bg-background px-4 py-8">
       <div className="flex items-center justify-between max-w-md w-full mx-auto">
-        <div className="inline-flex items-center gap-2">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary">
-            <Sparkles className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
-          </div>
+        <div className="inline-flex items-center gap-2.5">
+          <Logo />
           <span className="font-heading text-lg font-medium">Pace</span>
         </div>
         <button
@@ -134,6 +142,36 @@ export default function Welcome() {
                   </div>
                 ))}
               </div>
+
+              {slide.platform === "android" && (
+                <div className="mt-6">
+                  {isStandalone() ? (
+                    <p className="text-center text-sm text-primary">You're already using the installed app 🎉</p>
+                  ) : installed ? (
+                    <p className="text-center text-sm text-primary">Installed! Check your home screen.</p>
+                  ) : canInstall ? (
+                    <Button variant="secondary" className="w-full h-11" onClick={handleInstallClick}>
+                      Install now
+                    </Button>
+                  ) : (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Or use the steps above — your browser will show its own "Install" option if it supports it.
+                    </p>
+                  )}
+                </div>
+              )}
+
+              {slide.platform === "ios" && (
+                <div className="mt-6">
+                  {isStandalone() ? (
+                    <p className="text-center text-sm text-primary">You're already using the installed app 🎉</p>
+                  ) : (
+                    <p className="text-center text-xs text-muted-foreground">
+                      Apple doesn't allow apps to trigger this automatically — the steps above are the only way on iPhone.
+                    </p>
+                  )}
+                </div>
+              )}
             </motion.div>
           </AnimatePresence>
 

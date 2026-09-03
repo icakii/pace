@@ -1,7 +1,6 @@
 import React from "react";
 import { Link } from "react-router-dom";
 import {
-  Sparkles,
   CalendarDays,
   CheckSquare,
   BookOpen,
@@ -11,6 +10,7 @@ import {
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import Logo from "@/components/Logo";
 
 const FEATURES = [
   {
@@ -49,10 +49,8 @@ export default function Landing() {
   return (
     <div className="min-h-screen bg-background">
       <header className="max-w-5xl mx-auto px-6 py-6 flex items-center justify-between">
-        <div className="inline-flex items-center gap-2">
-          <div className="flex items-center justify-center w-9 h-9 rounded-xl bg-primary">
-            <Sparkles className="w-4 h-4 text-primary-foreground" aria-hidden="true" />
-          </div>
+        <div className="inline-flex items-center gap-2.5">
+          <Logo />
           <span className="font-heading text-lg font-medium">Pace</span>
         </div>
         <Link to="/login" className="text-sm text-muted-foreground hover:text-foreground">
