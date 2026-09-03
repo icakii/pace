@@ -3,9 +3,23 @@
   <head>
     <meta charset="UTF-8" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <script>
+      if (location.hostname === "pace-orpm.onrender.com") {
+        location.replace("https://findyourpace.net" + location.pathname + location.search + location.hash);
+      }
+    </script>
     <title>Pace — a quiet place for your day</title>
     <meta name="description" content="Pace is a personal organizer for your calendar, tasks, thoughts, and daily reflection." />
     <meta name="theme-color" content="#658165" />
+    <meta property="og:type" content="website" />
+    <meta property="og:url" content="https://findyourpace.net/" />
+    <meta property="og:title" content="Pace — a quiet place for your day" />
+    <meta property="og:description" content="Calendar & tasks, subscriptions, a daily journal, an e-reader, and a few games — one calm app." />
+    <meta property="og:image" content="https://findyourpace.net/og-image.png" />
+    <meta name="twitter:card" content="summary_large_image" />
+    <meta name="twitter:title" content="Pace — a quiet place for your day" />
+    <meta name="twitter:description" content="Calendar & tasks, subscriptions, a daily journal, an e-reader, and a few games — one calm app." />
+    <meta name="twitter:image" content="https://findyourpace.net/og-image.png" />
     <meta name="apple-mobile-web-app-capable" content="yes" />
     <meta name="apple-mobile-web-app-status-bar-style" content="default" />
     <meta name="apple-mobile-web-app-title" content="Pace" />
