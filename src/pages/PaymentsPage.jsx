@@ -11,6 +11,10 @@ import {
   CreditCard,
   FolderPlus,
   Bell,
+  Circle,
+  CircleSlash,
+  ChevronDown,
+  ChevronRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
@@ -57,6 +61,12 @@ export default function PaymentsPage() {
   const [editForm, setEditForm] = useState(emptyForm);
 
   const [selectedCurrency, setSelectedCurrency] = useState(null);
+  const [collapsed, setCollapsed] = useState({});
+
+  const toggleCollapsed = (sectionId) => {
+    const key = sectionId ?? "ungrouped";
+    setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
 
   const [notifSettings, setNotifSettings] = useState(null);
   const [notifLoading, setNotifLoading] = useState(false);
@@ -375,12 +385,29 @@ export default function PaymentsPage() {
           // always show so they can still be managed/deleted even when empty.
           if (section.id === null && items.length === 0) return null;
           const totals = selectedCurrency ? groupTotals(section.id) : null;
+          const isCollapsed = !!collapsed[section.id ?? "ungrouped"];
 
           return (
             <section key={section.id ?? "ungrouped"} className="rounded-3xl bg-card p-4 shadow-soft md:p-6">
               <div className="flex flex-wrap items-center justify-between gap-2 pb-3">
-                <div className="flex items-center gap-2">
+                <button
+                  onClick={() => toggleCollapsed(section.id)}
+                  className="flex items-center gap-2 text-left"
+                  aria-expanded={!isCollapsed}
+                >
+                  {isCollapsed ? (
+                    <ChevronRight className="h-4 w-4 text-muted-foreground" />
+                  ) : (
+                    <ChevronDown className="h-4 w-4 text-muted-foreground" />
+                  )}
                   <h2 className="font-heading text-lg font-medium">{section.name}</h2>
+                </button>
+                <div className="flex items-center gap-3">
+                  {totals && totals.count > 0 && (
+                    <p className="text-sm text-muted-foreground">
+                      {formatMoney(totals.monthly, selectedCurrency)}/mo · {formatMoney(totals.yearly, selectedCurrency)}/yr
+                    </p>
+                  )}
                   {section.id && (
                     <button
                       onClick={() => removeGroup(groups.find((g) => g.id === section.id))}
@@ -391,14 +418,9 @@ export default function PaymentsPage() {
                     </button>
                   )}
                 </div>
-                {totals && totals.count > 0 && (
-                  <p className="text-sm text-muted-foreground">
-                    {formatMoney(totals.monthly, selectedCurrency)}/mo · {formatMoney(totals.yearly, selectedCurrency)}/yr
-                  </p>
-                )}
               </div>
 
-              {items.length === 0 ? (
+              {isCollapsed ? null : items.length === 0 ? (
                 <p className="py-6 text-center text-sm italic text-muted-foreground">Nothing here yet.</p>
               ) : (
                 <ul className="flex flex-col divide-y divide-border">
@@ -457,7 +479,20 @@ export default function PaymentsPage() {
                         </>
                       ) : (
                         <>
-                          <Switch checked={p.active} onCheckedChange={() => togglePaused(p)} aria-label="Active" />
+                          <button
+                            type="button"
+                            onClick={() => togglePaused(p)}
+                            className={`rounded-lg p-1.5 shrink-0 ${
+                              p.active
+                                ? "text-primary hover:bg-primary/10"
+                                : "text-muted-foreground hover:bg-muted"
+                            }`}
+                            aria-pressed={p.active}
+                            aria-label={p.active ? "Pause" : "Resume"}
+                            title={p.active ? "Pause" : "Resume"}
+                          >
+                            {p.active ? <Circle className="h-4 w-4" /> : <CircleSlash className="h-4 w-4" />}
+                          </button>
                           <div className="flex-1 min-w-[120px]">
                             <span className={`text-sm ${!p.active ? "text-muted-foreground line-through" : ""}`}>
                               {p.title}
