@@ -48,6 +48,8 @@ export async function getNotificationSettings(userId) {
       task_reminders: false,
       thoughts_reminder: false,
       thoughts_reminder_time: "20:00",
+      payment_reminders: false,
+      payment_reminder_days: 2,
     }
   );
 }
@@ -83,6 +85,15 @@ export async function setThoughtsReminderTime(userId, time) {
   const { data } = await supabase
     .from("notification_settings")
     .upsert({ user_id: userId, thoughts_reminder_time: time }, { onConflict: "user_id" })
+    .select()
+    .single();
+  return data;
+}
+
+export async function setPaymentReminderDays(userId, days) {
+  const { data } = await supabase
+    .from("notification_settings")
+    .upsert({ user_id: userId, payment_reminder_days: days }, { onConflict: "user_id" })
     .select()
     .single();
   return data;

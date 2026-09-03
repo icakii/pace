@@ -15,6 +15,7 @@ import TasksPage from "@/pages/TasksPage";
 import ThoughtsPage from "@/pages/ThoughtsPage";
 import QuotePage from "@/pages/QuotePage";
 import ProfilePage from "@/pages/ProfilePage";
+import PaymentsPage from "@/pages/PaymentsPage";
 import LibraryPage from "@/pages/LibraryPage";
 import GamesPage from "@/pages/GamesPage";
 import SolitairePage from "@/pages/games/SolitairePage";
@@ -80,6 +81,7 @@ export default function App() {
                 <Route path="/thoughts" element={<ThoughtsPage />} />
                 <Route path="/quote" element={<QuotePage />} />
                 <Route path="/library" element={<LibraryPage />} />
+                <Route path="/payments" element={<PaymentsPage />} />
                 <Route path="/games" element={<GamesPage />} />
                 <Route path="/games/solitaire" element={<SolitairePage />} />
                 <Route path="/games/wordle" element={<WordPuzzlePage />} />

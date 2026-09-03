@@ -7,6 +7,7 @@ import {
   Gamepad2,
   Bell,
   Quote,
+  CreditCard,
   ArrowRight,
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
@@ -22,6 +23,11 @@ const FEATURES = [
     icon: Bell,
     title: "Reminders that reach you",
     body: "An hour before a task, or a nudge for the ones without a set time — installed as an app, so it works on your phone.",
+  },
+  {
+    icon: CreditCard,
+    title: "Recurring payments",
+    body: "Track subscriptions, bills, and installments in groups, with reminders before each charge.",
   },
   {
     icon: CheckSquare,

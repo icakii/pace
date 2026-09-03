@@ -1,7 +1,8 @@
 // Deno Edge Function — run every 15 minutes by a Supabase Cron Job.
 // Sends: (1) "1 hour before" reminders for timed tasks, (2) a midday summary
 // for today's tasks that have no set time, (3) a configurable daily nudge to
-// write a thought if none was written yet today.
+// write a thought if none was written yet today, (4) a reminder N days
+// before a recurring payment's next charge.
 import { createClient } from "https://esm.sh/@supabase/supabase-js@2";
 import webpush from "npm:web-push@3.6.7";
 
@@ -49,6 +50,30 @@ function isCompletedForDate(task: any, dateStr: string) {
   const isRecurring = Array.isArray(task.recurrence_days) && task.recurrence_days.length > 0;
   if (isRecurring) return (task.completed_dates || []).includes(dateStr);
   return !!task.completed;
+}
+
+function addCycleDateStr(dateStr: string, cycle: string) {
+  const d = new Date(`${dateStr}T00:00:00Z`);
+  if (cycle === "weekly") d.setUTCDate(d.getUTCDate() + 7);
+  else if (cycle === "yearly") d.setUTCFullYear(d.getUTCFullYear() + 1);
+  else d.setUTCMonth(d.getUTCMonth() + 1);
+  return d.toISOString().slice(0, 10);
+}
+
+function nextOccurrenceDateStr(nextChargeDate: string, cycle: string, todayStr: string) {
+  let d = nextChargeDate;
+  let guard = 0;
+  while (d < todayStr && guard < 1000) {
+    d = addCycleDateStr(d, cycle);
+    guard++;
+  }
+  return d;
+}
+
+function daysBetween(fromStr: string, toStr: string) {
+  const a = new Date(`${fromStr}T00:00:00Z`).getTime();
+  const b = new Date(`${toStr}T00:00:00Z`).getTime();
+  return Math.round((b - a) / (24 * 60 * 60 * 1000));
 }
 
 // Interpret `${dateStr}T${timeStr}` as wall-clock time in `timeZone`, return the equivalent UTC Date.
@@ -104,7 +129,7 @@ Deno.serve(async () => {
   const { data: settings } = await supabase
     .from("notification_settings")
     .select("*")
-    .or("task_reminders.eq.true,thoughts_reminder.eq.true");
+    .or("task_reminders.eq.true,thoughts_reminder.eq.true,payment_reminders.eq.true");
 
   if (!settings || settings.length === 0) {
     return new Response(JSON.stringify({ ok: true, checked: 0 }), { status: 200 });
@@ -112,9 +137,10 @@ Deno.serve(async () => {
 
   const userIds = settings.map((s) => s.user_id);
 
-  const [{ data: subs }, { data: tasks }] = await Promise.all([
+  const [{ data: subs }, { data: tasks }, { data: recurringPayments }] = await Promise.all([
     supabase.from("push_subscriptions").select("*").in("user_id", userIds),
     supabase.from("tasks").select("*").in("user_id", userIds),
+    supabase.from("recurring_payments").select("*").in("user_id", userIds).eq("active", true),
   ]);
 
   const subsByUser = new Map<string, any[]>();
@@ -127,6 +153,12 @@ Deno.serve(async () => {
   for (const t of tasks || []) {
     if (!tasksByUser.has(t.user_id)) tasksByUser.set(t.user_id, []);
     tasksByUser.get(t.user_id)!.push(t);
+  }
+
+  const paymentsByUser = new Map<string, any[]>();
+  for (const p of recurringPayments || []) {
+    if (!paymentsByUser.has(p.user_id)) paymentsByUser.set(p.user_id, []);
+    paymentsByUser.get(p.user_id)!.push(p);
   }
 
   let sent = 0;
@@ -202,6 +234,27 @@ Deno.serve(async () => {
           sent++;
         }
         await supabase.from("notification_settings").update({ last_thoughts_nudge: todayLocal }).eq("user_id", userId);
+      }
+    }
+
+    if (setting.payment_reminders) {
+      const reminderDays = setting.payment_reminder_days ?? 2;
+      for (const payment of paymentsByUser.get(userId) || []) {
+        const nextDate = nextOccurrenceDateStr(payment.next_charge_date, payment.billing_cycle, todayLocal);
+        if (payment.last_reminder_sent_for === nextDate) continue;
+        const daysUntil = daysBetween(todayLocal, nextDate);
+        if (daysUntil === reminderDays) {
+          await sendToUser(userId, subsByUser, {
+            title: "💳 Upcoming charge",
+            body: `${payment.title} — ${payment.amount} ${payment.currency} in ${reminderDays} day${reminderDays === 1 ? "" : "s"}`,
+            url: "/payments",
+          });
+          sent++;
+          await supabase
+            .from("recurring_payments")
+            .update({ last_reminder_sent_for: nextDate })
+            .eq("id", payment.id);
+        }
       }
     }
   }

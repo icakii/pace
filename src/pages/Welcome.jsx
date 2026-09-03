@@ -6,6 +6,7 @@ import {
   CheckSquare,
   BookOpen,
   Gamepad2,
+  CreditCard,
   MoreVertical,
   Share,
   SquarePlus,
@@ -23,6 +24,7 @@ const SLIDES = [
     subtitle: "Your calendar, tasks, thoughts, and a bit of fun — all in one calm place.",
     features: [
       { icon: CalendarDays, label: "Calendar & tasks with reminders" },
+      { icon: CreditCard, label: "Track subscriptions & recurring bills" },
       { icon: CheckSquare, label: "Daily thoughts journal" },
       { icon: BookOpen, label: "An e-book library and reader" },
       { icon: Gamepad2, label: "A few games to unwind" },
