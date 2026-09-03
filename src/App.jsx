@@ -21,6 +21,7 @@ import SolitairePage from "@/pages/games/SolitairePage";
 import WordPuzzlePage from "@/pages/games/WordPuzzlePage";
 import MemoryMatchPage from "@/pages/games/MemoryMatchPage";
 import Game2048Page from "@/pages/games/Game2048Page";
+import Landing from "@/pages/Landing";
 import Welcome from "@/pages/Welcome";
 import Login from "@/pages/Login";
 import Register from "@/pages/Register";
@@ -49,11 +50,7 @@ export default function App() {
             <Route path="/forgot-password" element={<ForgotPassword />} />
             <Route path="/reset-password" element={<ResetPassword />} />
 
-            <Route
-              element={
-                <ProtectedRoute unauthenticatedElement={<Navigate to="/welcome" replace />} />
-              }
-            >
+            <Route element={<ProtectedRoute unauthenticatedElement={<Landing />} />}>
               <Route element={<Layout />}>
                 <Route path="/" element={<Dashboard />} />
               </Route>
