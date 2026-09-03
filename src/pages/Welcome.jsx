@@ -1,4 +1,4 @@
-import React, { useEffect, useState } from "react";
+import React, { useState } from "react";
 import { useNavigate, Link } from "react-router-dom";
 import { motion, AnimatePresence } from "framer-motion";
 import {
@@ -15,8 +15,6 @@ import {
 import { Button } from "@/components/ui/button";
 import Logo from "@/components/Logo";
 import { useInstallPrompt, isStandalone } from "@/lib/installPrompt";
-
-const SEEN_KEY = "pace_seen_welcome";
 
 const SLIDES = [
   {
@@ -58,7 +56,6 @@ export default function Welcome() {
   const navigate = useNavigate();
   const [step, setStep] = useState(0);
   const [direction, setDirection] = useState(1);
-  const [skipped, setSkipped] = useState(false);
   const [installed, setInstalled] = useState(false);
   const { canInstall, promptInstall } = useInstallPrompt();
 
@@ -67,25 +64,9 @@ export default function Welcome() {
     if (accepted) setInstalled(true);
   };
 
-  useEffect(() => {
-    if (localStorage.getItem(SEEN_KEY) === "true") {
-      navigate("/login", { replace: true });
-      setSkipped(true);
-    }
-  }, [navigate]);
-
-  const finish = (to) => {
-    try {
-      localStorage.setItem(SEEN_KEY, "true");
-    } catch {
-      // ignore, e.g. private browsing storage restrictions
-    }
-    navigate(to);
-  };
-
   const goNext = () => {
     if (step === SLIDES.length - 1) {
-      finish("/register");
+      navigate("/register");
       return;
     }
     setDirection(1);
@@ -96,8 +77,6 @@ export default function Welcome() {
     setDirection(-1);
     setStep((s) => Math.max(0, s - 1));
   };
-
-  if (skipped) return null;
 
   const slide = SLIDES[step];
   const isLast = step === SLIDES.length - 1;
@@ -110,7 +89,7 @@ export default function Welcome() {
           <span className="font-heading text-lg font-medium">Pace</span>
         </div>
         <button
-          onClick={() => finish("/login")}
+          onClick={() => navigate("/login")}
           className="text-sm text-muted-foreground hover:text-foreground"
         >
           Skip
@@ -202,17 +181,7 @@ export default function Welcome() {
           {isLast && (
             <p className="mt-6 text-center text-sm text-muted-foreground">
               Already have an account?{" "}
-              <Link
-                to="/login"
-                onClick={() => {
-                  try {
-                    localStorage.setItem(SEEN_KEY, "true");
-                  } catch {
-                    // ignore
-                  }
-                }}
-                className="text-primary font-medium hover:underline"
-              >
+              <Link to="/login" className="text-primary font-medium hover:underline">
                 Log in
               </Link>
             </p>
