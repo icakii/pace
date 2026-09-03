@@ -11,11 +11,9 @@ import { occursOnDate } from "@/lib/occurrences";
 import { categoryDot } from "@/lib/categories";
 import { computeStreak, STREAK_MIN } from "@/lib/stats";
 import DayDetailSheet from "@/components/DayDetailSheet";
+import { getQuoteOfTheDay } from "@/lib/quotes";
 
-const QUOTE = {
-  text: "Almost everything will work again if you unplug it for a few minutes — including you.",
-  author: "Anne Lamott",
-};
+const QUOTE = getQuoteOfTheDay();
 
 export default function Dashboard() {
   const { user } = useAuth();
